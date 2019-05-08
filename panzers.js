@@ -1,10 +1,11 @@
 class Panzer {
     constructor(w, h, inputMap){
-        
+        this.ammo = {x: 0, y: 0};
         this.panzer = {x: 1, y: 1};
         this.currentDirection = {x: 0, y: 0};
         this.fieldWidth = w;
         this.fieldHeight = h;
+        this.superInputMap = inputMap;
         
     }
     createPanzer(){
@@ -15,7 +16,8 @@ class Panzer {
         this.panzer.x = this.panzer.x + this.currentDirection.x;
         this.panzer.y = this.panzer.y + this.currentDirection.y;
     }
-    
+
+    //если новое направление == старому, то двигаемся, если не равно - то хуй его
     changeDirectionOfPanzer(keyCode){
         var directionMap = {
             up : { x: 0, y: -1},
@@ -25,12 +27,23 @@ class Panzer {
         }   
 
     }
-    shooting(){
 
+    createAmmo(){
+        this.ammo.x = this.panzer.x + this.currentDirection.x;
+        this.ammo.y = this.panzer.y + this.currentDirection.y;
+        //пихнуть его куда-то где тусуют все снаряды 
+        //
+    }
+
+    shooting(keyCode){
+        if(keyCode == 99){
+            createAmmo()
+        }
     }
     
 }
 const panzer = new Panzer()
+
 // class Shell {
 //     constructor(){
 
@@ -41,6 +54,8 @@ class Field {
         this.arrOfBlocks = [];
     }
 }
+
+
 class Game {
     constructor(){
         this.arrOfPanzers = [];
@@ -65,7 +80,8 @@ class Game {
     panzerControl(){
         document.addEventListener('keydown', (e)=> {
             for(let i = 0; i < this.arrOfPanzers.length; i++){
-                this.arrOfPanzers[i].changeDirectionOfPanzer(e.keyCode)
+                this.arrOfPanzers[i].changeDirectionOfPanzer(e.keyCode);
+                this.arrOfPanzers[i].shooting(e.keyCode)
             }
         })
     }
