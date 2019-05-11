@@ -1,10 +1,10 @@
 class Panzer {
-    constructor(w, h, inputMap, g){
+    constructor(inputMap, g){
 
         this.position = {x: 10, y: 1};// координаты для спавна в переменную вместо 1,1
         this.currentDirection = {x: 0, y: 0};
-        this.fieldWidth = w;
-        this.fieldHeight = h;
+        // this.fieldWidth = w;
+        // this.fieldHeight = h;
         this.superInputMap = inputMap;
         this.draw = g;
         this.directionChangeIntevalId = null;
@@ -13,12 +13,12 @@ class Panzer {
 
     movePanzer(directionChange){
         this.position.x += directionChange.x ;
-
         this.position.y += directionChange.y ;
-        console.log(this.position.x, this.position.y);
         
     }
+    rotatePanzer(){
 
+    }
     //если новое направление == старому, то двигаемся, если не равно - поворот
     changeDirectionOfPanzer(keyCode){
         var directionMap = {
@@ -27,40 +27,63 @@ class Panzer {
             right: { x: 1, y: 0},
             left: { x: -1, y: 0}
         }   
+        if(keyCode == 99){
+            this.createAmmo()
+        }
         let directionChange = directionMap[this.superInputMap[keyCode]]
         
-        
-        this.stopChangeDirection()
-        this.directionChangeIntevalId = setInterval(()=>{
+
+        if (directionChange.x == this.currentDirection.x && directionChange.y == this.currentDirection.y){
+            this.stopChangeDirection()
+            this.directionChangeIntevalId = setInterval(()=>{
             this.movePanzer(directionChange);   
             this.draw.drawField(this)
 
         }, 1000/60);
+
+        }else if(directionChange.x != this.currentDirection.x || directionChange.y != this.currentDirection.y){
+            this.rotatePanzer(directionChange)
+            this.currentDirection = directionChange;
+            console.log('hui tebe');
+            
+        }
+        
+        
     }
     stopChangeDirection(){
         clearInterval(this.directionChangeIntevalId);
     }
 
     createAmmo(){
+        const shell = new Shell (this.position, this.currentDirection, this.draw)
+        console.log(111);
+        
         //пихнуть его куда-то где тусуют все снаряды 
         //но лучше создавать тут экземпляры класса shell 
     }
 
-    shooting(keyCode){
-        if(keyCode == 99){
-            createAmmo()
-        }
-    }
+    // shooting(keyCode){
+    //     if(keyCode == 99){
+    //         createAmmo()
+    //     }
+    // }
     
 }
 //const panzer = new Panzer()
 
 class Shell {
-    constructor(){
+    constructor(p, c, d){
+        this.position = p
+        this.currentDirection = c;
+        this.draw = d
         this.shellCoords = {x: 0, y: 0};
     }
+    createShell(){
+        this.shellCoords.x = this.position.x + this.currentDirection.x
+        this.shellCoords.y = this.position.y + this.currentDirection.y
+    }
 
-    
+
 }
 // class Field {
 //     constructor(){
@@ -81,8 +104,6 @@ class Game {
         this.gameControl();
         this.intervalId = null;
         this.arrOfPanzers = [];
-        this.fieldWidth = 40;
-        this.fieldHeight = 40;
         this.timer = 200;
         this.superInputMap = [
             {
@@ -98,12 +119,10 @@ class Game {
                 65 : 'left'
             }
         ]
-        this.createPanzers()
-        this.panzerControl()
     }
 
     createPanzers(){
-        const panz = new Panzer(this.fieldWidth, this.fieldHeight, this.superInputMap[0], this.draw);
+        const panz = new Panzer(this.superInputMap[0], this.draw);
         //const panz1 = new Panzer(this.draw.fieldWidth, this.draw.fieldHeight, this.superInputMap[1]);
         this.arrOfPanzers.push(panz);
         //this.arrOfPanzers.push(panz1);
@@ -134,7 +153,7 @@ class Game {
         this.draw.drawField(this)
     }
     gameControl(){
-        this.draw.startButton.addEventListener('click', ()=>{                        ///()=>
+        this.draw.startButton.addEventListener('click', ()=>{                  
             this.startGame();  
         } );
 
@@ -196,11 +215,14 @@ class Drawing {
         document.body.appendChild(div);
         console.log(2);
     }
-  
+    drawShell(){
+        this.ctx.fillStyle = 'black'
+        this.ctx.fillRect(y, x, 5, 5)
+    }
     drawField(){
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
+        
         const img = new Image();
         img.src = "hui.png";
         
