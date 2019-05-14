@@ -19,7 +19,6 @@ class Panzer {
     //     console.log(keyCode);
         
     // }
-    //если новое направление == старому, то двигаемся, если не равно - поворот
     changeDirectionOfPanzer(keyCode){
         var directionMap = {
             up : { x: 0, y: -1},
@@ -56,9 +55,7 @@ class Panzer {
         const shell = new Shell (this.position, this.currentDirection, this.draw)
         this.arrOfShells.push(shell)
         console.log(111);
-        
-        //пихнуть его куда-то где тусуют все снаряды 
-        //но лучше создавать тут экземпляры класса shell 
+
     }
 
     shooting(keyCode){
@@ -68,7 +65,7 @@ class Panzer {
     }
     
 }
-//const panzer = new Panzer()
+
 
 class Shell {
     constructor(p, c, d){
@@ -184,8 +181,7 @@ class Drawing {
         this.scale = this.cellSize * 3;
 
         this.canvas.width = (this.fieldWidth + 1)*this.cellSize;
-        this.canvas.height = (this.fieldHeight + 1)*this.cellSize;
-        
+        this.canvas.height = (this.fieldHeight + 1)*this.cellSize; 
     }
 
     createHtmlElements(){
@@ -245,7 +241,6 @@ class Drawing {
             for(let j = 0; j < panzerPosition.arrOfShells.length; j++){
                 let shellPositions = panzerPosition.arrOfShells[j];
                 this.ctx.fillStyle = 'black';
-                console.log(12);
                 
                 this.ctx.fillRect(shellPositions.shellCoords.x, shellPositions.shellCoords.y, 5, 5)
             }
