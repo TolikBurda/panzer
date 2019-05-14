@@ -3,8 +3,6 @@ class Panzer {
 
         this.position = {x: 0, y: 0};// координаты для спавна в переменную вместо 1,1
         this.currentDirection = {x: 0, y: 0};
-        // this.fieldWidth = w;
-        // this.fieldHeight = h;
         this.superInputMap = inputMap;
         this.draw = d;
         this.directionChangeIntevalId = null;
@@ -187,7 +185,6 @@ class Drawing {
 
         this.canvas.width = (this.fieldWidth + 1)*this.cellSize;
         this.canvas.height = (this.fieldHeight + 1)*this.cellSize;
-        //this.drawField()
         
     }
 
@@ -220,20 +217,9 @@ class Drawing {
         }
         document.body.appendChild(div);
     }
-    drawShell(){
-        // for(let i = 0; i < game.arrOfPanzers.length; i++){
-        //     let pPositions = game.arrOfPanzers[i];
-        //     for(let j = 0; j < pPositions.arrOfShells.length; j++){
-        //         let shellPositions = pPositions.arrOfShells[j];
-        //         this.ctx.fillStyle = 'black';
-        //         console.log(12);
-                
-        //         this.ctx.fillRect(shellPositions.shellCoords.x, shellPositions.shellCoords.y, 5, 5)
-        //     }
-        // }
-        // this.ctx.fillStyle = 'black'
-        // this.ctx.fillRect(y, x, 5, 5)
-    }
+    // drawShell(){
+
+    // }
     drawField(angle){
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -264,26 +250,10 @@ class Drawing {
                 this.ctx.fillRect(shellPositions.shellCoords.x, shellPositions.shellCoords.y, 5, 5)
             }
         }
-        
-
-        // const img = new Image();
-        // img.src = "hui.png";
-        
-        
-        // img.addEventListener('load', ()=>{
-        //     this.ctx.drawImage(img, this.panzer.x, this.panzer.y, this.scale, this.scale);// передать сюда координаты 
-        //     console.log('img loaded');
-            
-        // })
 
         this.ctx.strokeStyle = 'blue';
         this.ctx.strokeRect(0, 0, (this.fieldWidth + 1)*this.cellSize, (this.fieldHeight + 1)*this.cellSize);
         console.log(1);
-
-
-
-        // this.ctx.fillStyle = 'magenta';
-        // this.ctx.fillRect(this.panzer.x*this.cellSize, this.panzer.y*this.cellSize, this.cellSize*2, this.cellSize*2);
         
     }
 }
