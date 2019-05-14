@@ -1,7 +1,7 @@
 class Panzer {
     constructor(inputMap, g){
 
-        this.position = {x: 10, y: 1};// координаты для спавна в переменную вместо 1,1
+        this.position = {x: 0, y: 0};// координаты для спавна в переменную вместо 1,1
         this.currentDirection = {x: 0, y: 0};
         // this.fieldWidth = w;
         // this.fieldHeight = h;
@@ -16,9 +16,10 @@ class Panzer {
         this.position.y += directionChange.y ;
         
     }
-    rotatePanzer(){
-
-    }
+    // rotatePanzer(keyCode){
+    //     console.log(keyCode);
+        
+    // }
     //если новое направление == старому, то двигаемся, если не равно - поворот
     changeDirectionOfPanzer(keyCode){
         var directionMap = {
@@ -27,25 +28,23 @@ class Panzer {
             right: { x: 1, y: 0},
             left: { x: -1, y: 0}
         }   
-        if(keyCode == 99){
-            this.createAmmo()
-        }
         let directionChange = directionMap[this.superInputMap[keyCode]]
         
-
+        if(!directionChange){
+            return null
+        }
         if (directionChange.x == this.currentDirection.x && directionChange.y == this.currentDirection.y){
             this.stopChangeDirection()
             this.directionChangeIntevalId = setInterval(()=>{
             this.movePanzer(directionChange);   
-            this.draw.drawField(this)
+            this.draw.drawField(Math.atan2(directionChange.y, directionChange.x))
 
         }, 1000/60);
 
         }else if(directionChange.x != this.currentDirection.x || directionChange.y != this.currentDirection.y){
-            this.rotatePanzer(directionChange)
-            this.currentDirection = directionChange;
-            console.log('hui tebe');
-            
+            // this.rotatePanzer(keyCode)
+            this.draw.drawField(Math.atan2(directionChange.y, directionChange.x))
+            this.currentDirection = directionChange;   
         }
         
         
@@ -55,27 +54,27 @@ class Panzer {
     }
 
     createAmmo(){
-        const shell = new Shell (this.position, this.currentDirection, this.draw)
+        const shell = new Shell (this.position, this.currentDirection)
         console.log(111);
         
         //пихнуть его куда-то где тусуют все снаряды 
         //но лучше создавать тут экземпляры класса shell 
     }
 
-    // shooting(keyCode){
-    //     if(keyCode == 99){
-    //         createAmmo()
-    //     }
-    // }
+    shooting(keyCode){
+        if(keyCode == 99){
+            this.createAmmo()
+        }
+    }
     
 }
 //const panzer = new Panzer()
 
 class Shell {
-    constructor(p, c, d){
+    constructor(p, c){
         this.position = p
         this.currentDirection = c;
-        this.draw = d
+     
         this.shellCoords = {x: 0, y: 0};
     }
     createShell(){
@@ -143,14 +142,14 @@ class Game {
         })
     }
     stopGame(){
-
+        this.arrOfPanzers = [];
 
     }
     startGame(){
         this.stopGame();
         this.createPanzers();
         this.panzerControl();
-        this.draw.drawField(this)
+        this.draw.drawField()
     }
     gameControl(){
         this.draw.startButton.addEventListener('click', ()=>{                  
@@ -213,16 +212,15 @@ class Drawing {
             div.appendChild(arrOfHtmlElements[n])
         }
         document.body.appendChild(div);
-        console.log(2);
     }
     drawShell(){
         this.ctx.fillStyle = 'black'
         this.ctx.fillRect(y, x, 5, 5)
     }
-    drawField(){
+    drawField(angle){
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
+        //let a = angle;
         const img = new Image();
         img.src = "hui.png";
         
@@ -230,14 +228,14 @@ class Drawing {
         for(let j = 0; j < game.arrOfPanzers.length; j++){
             let panzerPosition = game.arrOfPanzers[j]
             img.addEventListener('load', ()=>{
-                // let dx = 64;
-                // let dy = 64;
-                // this.ctx.save();
-                // this.ctx.translate(dx, dy);
-                // this.ctx.rotate(30 * (Math.PI/180));
-                // this.ctx.translate(-dx, -dy);
-                // this.ctx.rotate(5 * (Math.PI/180));
-                this.ctx.drawImage(img, panzerPosition.position.x, panzerPosition.position.y, this.scale, this.scale);// передать сюда координаты 
+                let dx = 64;
+                let dy = 64;
+                this.ctx.save();
+                this.ctx.translate(panzerPosition.position.x + dx, panzerPosition.position.y + dy);
+                this.ctx.rotate(angle); //angle
+                
+                this.ctx.translate(-(panzerPosition.position.x + dx), -(panzerPosition.position.y + dy));
+                this.ctx.drawImage(img, panzerPosition.position.x, panzerPosition.position.y);// передать сюда координаты 
                 console.log('img loaded');
                 this.ctx.restore();
             })
