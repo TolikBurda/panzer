@@ -1,7 +1,7 @@
 class Panzer {
     constructor(inputMap, d){
 
-        this.position = {x: 0, y: 0};// координаты для спавна в переменную вместо 1,1
+        this.position = {x: 10, y: 10};// координаты для спавна в переменную вместо 1,1
         this.currentDirection = {x: 0, y: 0};
         this.superInputMap = inputMap;
         this.draw = d;
@@ -13,6 +13,7 @@ class Panzer {
     movePanzer(directionChange){
         this.position.x += directionChange.x ;
         this.position.y += directionChange.y ;
+        console.log(this.position);
         
     }
     // rotatePanzer(keyCode){
@@ -54,7 +55,7 @@ class Panzer {
     createAmmo(){
         const shell = new Shell (this.position, this.currentDirection, this.draw)
         this.arrOfShells.push(shell)
-        console.log(111);
+        //console.log(111);
 
     }
 
@@ -77,8 +78,8 @@ class Shell {
         this.createShell()
     }
     createShell(){
-        this.shellCoords.x = this.position.x + 128 + 64*Math.atan2(this.currentDirection.y, this.currentDirection.x);  /// + длина дула, повернутая на atan2 направления
-        this.shellCoords.y = this.position.y + 64 + 64*Math.atan2(this.currentDirection.y, this.currentDirection.x);
+        this.shellCoords.x = this.position.x + 67*this.currentDirection.x;  /// + длина дула, повернутая на atan2 направления + 64*Math.atan2(this.currentDirection.y, this.currentDirection.x)
+        this.shellCoords.y = this.position.y + 67*this.currentDirection.y;
         console.log(this.shellCoords);
         
         
@@ -127,7 +128,7 @@ class Game {
         //const panz1 = new Panzer(this.draw.fieldWidth, this.draw.fieldHeight, this.superInputMap[1]);
         this.arrOfPanzers.push(panz);
         //this.arrOfPanzers.push(panz1);
-        console.log(this.arrOfPanzers);
+        //console.log(this.arrOfPanzers);
         
     }
     panzerControl(){
@@ -175,8 +176,8 @@ class Drawing {
         this.stopButton = null;
         this.createHtmlElements();
         this.ctx = this.canvas.getContext('2d');
-        this.fieldWidth = 40;
-        this.fieldHeight = 40;
+        this.fieldWidth = 50;
+        this.fieldHeight = 50;
         this.cellSize = 10;
         this.scale = this.cellSize * 3;
 
@@ -230,14 +231,16 @@ class Drawing {
                 let dx = 64;
                 let dy = 64;
                 this.ctx.save();
-                this.ctx.translate(panzerPosition.position.x + dx, panzerPosition.position.y + dy);
+                this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
                 this.ctx.rotate(angle); //angle
-                
-                this.ctx.translate(-(panzerPosition.position.x + dx), -(panzerPosition.position.y + dy));
-                this.ctx.drawImage(img, panzerPosition.position.x, panzerPosition.position.y);// передать сюда координаты 
-                console.log('img loaded');
+                this.ctx.translate( -panzerPosition.position.x, -panzerPosition.position.y);
+                this.ctx.drawImage(img, panzerPosition.position.x - dx, panzerPosition.position.y - dy);
+                //console.log('img loaded');
+                this.ctx.fillStyle = 'red';
+                this.ctx.fillRect(panzerPosition.position.x, panzerPosition.position.y, 10, 10)
                 this.ctx.restore();
             })
+            
             for(let j = 0; j < panzerPosition.arrOfShells.length; j++){
                 let shellPositions = panzerPosition.arrOfShells[j];
                 this.ctx.fillStyle = 'black';
@@ -248,7 +251,7 @@ class Drawing {
 
         this.ctx.strokeStyle = 'blue';
         this.ctx.strokeRect(0, 0, (this.fieldWidth + 1)*this.cellSize, (this.fieldHeight + 1)*this.cellSize);
-        console.log(1);
+        //console.log(1);
         
     }
 }
