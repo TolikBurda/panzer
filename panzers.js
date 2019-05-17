@@ -158,8 +158,9 @@ class Game {
         this.stopGame();
         this.createPanzers();
         this.panzerControl();
-        this.draw.drawField()
+        
         this.intervalId = setInterval(()=> {
+            this.draw.drawField()
             this.mainLoop()
         }, this.timer);
 
@@ -180,7 +181,10 @@ class Game {
                 for(let k = 0; k < panz.arrOfShells.length; k++){
                     //let shell = panz.arrOfShells[k];  
                     panz.arrOfShells[k].moveShells();
+                    this.draw.drawField()
                     console.log("array.lenght=", panz.arrOfShells.length); 
+                    console.log();
+                    
                
                 }
             }else{console.log("array of shells is empty");
@@ -242,7 +246,7 @@ class Drawing {
     drawField(angle){
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        //let a = angle;
+        let a = angle;
         const img = new Image();
         img.src = "hui.png";
         
@@ -254,7 +258,7 @@ class Drawing {
                 let dy = 64;
                 this.ctx.save();
                 this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
-                this.ctx.rotate(angle); //angle
+                this.ctx.rotate(a); //angle
                 this.ctx.translate( -panzerPosition.position.x, -panzerPosition.position.y);
                 this.ctx.drawImage(img, panzerPosition.position.x - dx, panzerPosition.position.y - dy);
                 //console.log('img loaded');
@@ -276,6 +280,20 @@ class Drawing {
         //console.log(1);
         
     }
+    // drawSells(){
+    //     // this.ctx.fillStyle = 'white';
+    //     // this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    //     for(let j = 0; j < game.arrOfPanzers.length; j++){
+    //         let panzerPosition = game.arrOfPanzers[j]
+    //         for(let j = 0; j < panzerPosition.arrOfShells.length; j++){
+    //             let shellPositions = panzerPosition.arrOfShells[j];
+    //             this.ctx.fillStyle = 'black';
+                
+    //             this.ctx.fillRect(shellPositions.shellCoords.x, shellPositions.shellCoords.y, 5, 5)
+    //         }
+    //     }    
+    // }
 }
 // class ResourceLoder{
 //     constructor(){
