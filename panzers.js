@@ -7,19 +7,16 @@ class Panzer {
         this.draw = d;
         this.directionChangeIntevalId = null;
         this.arrOfShells = [];
+        //this.shellDirectionChangeIntevalId = null;
     }
 
 
     movePanzer(directionChange){
         this.position.x += directionChange.x ;
         this.position.y += directionChange.y ;
-        console.log(this.position);
-        
+        //console.log(this.position);    
     }
-    // rotatePanzer(keyCode){
-    //     console.log(keyCode);
-        
-    // }
+
     changeDirectionOfPanzer(keyCode){
         var directionMap = {
             up : { x: 0, y: -1},
@@ -37,8 +34,7 @@ class Panzer {
             this.directionChangeIntevalId = setInterval(()=>{
             this.movePanzer(directionChange);   
             this.draw.drawField(Math.atan2(directionChange.y, directionChange.x))
-
-        }, 1000/60);
+            }, 1000/60);
 
         }else if(directionChange.x != this.currentDirection.x || directionChange.y != this.currentDirection.y){
             // this.rotatePanzer(keyCode)
@@ -51,40 +47,47 @@ class Panzer {
     stopChangeDirection(){
         clearInterval(this.directionChangeIntevalId);
     }
-
-    createAmmo(){
+    
+    // moveShells(){
+    //     for(let i = 0; i < this.arrOfShells.length; i++){
+    //         let shell = this.arrOfShells[i];
+    //         shell.shellCoords.x += this.currentDirection.x;
+    //         shell.shellCoords.y += this.currentDirection.y;
+    //     }
+    //}
+    createShells(){
         const shell = new Shell (this.position, this.currentDirection, this.draw)
         this.arrOfShells.push(shell)
-        //console.log(111);
-
     }
 
     shooting(keyCode){
         if(keyCode == 87){
-            this.createAmmo()
+            this.createShells()
         }
     }
     
 }
-
 
 class Shell {
     constructor(p, c, d){
         this.position = p
         this.currentDirection = c;
         this.draw = d;
-     
         this.shellCoords = {x: 0, y: 0};
         this.createShell()
     }
+
     createShell(){
-        this.shellCoords.x = this.position.x + 67*this.currentDirection.x;  /// + длина дула, повернутая на atan2 направления + 64*Math.atan2(this.currentDirection.y, this.currentDirection.x)
+        this.shellCoords.x = this.position.x + 67*this.currentDirection.x;
         this.shellCoords.y = this.position.y + 67*this.currentDirection.y;
-        console.log(this.shellCoords);
-        
-        
+        console.log(this.shellCoords);  
+        //this.moveShells()  
     }
 
+    moveShells(){
+        this.shellCoords.x += this.currentDirection.x;
+        this.shellCoords.y += this.currentDirection.y; 
+    }
 
 }
 // class Field {
@@ -98,7 +101,9 @@ class Shell {
 
 //     }
 // }
+// class SubField extends Field {
 
+// }
 
 class Game {
     constructor(){
@@ -106,7 +111,7 @@ class Game {
         this.gameControl();
         this.intervalId = null;
         this.arrOfPanzers = [];
-        this.timer = 200;
+        this.timer = 100;
         this.superInputMap = [
             {
                 38 : 'up',
@@ -145,6 +150,7 @@ class Game {
         })
     }
     stopGame(){
+        clearInterval(this.intervalId);
         this.arrOfPanzers = [];
 
     }
@@ -153,6 +159,10 @@ class Game {
         this.createPanzers();
         this.panzerControl();
         this.draw.drawField()
+        this.intervalId = setInterval(()=> {
+            this.mainLoop()
+        }, this.timer);
+
     }
     gameControl(){
         this.draw.startButton.addEventListener('click', ()=>{                  
@@ -164,7 +174,19 @@ class Game {
         } );
     }
     mainLoop(){
+        for(let i = 0; i < this.arrOfPanzers.length; i++){
+            let panz = this.arrOfPanzers[i];
+            if(panz.arrOfShells.length){
+                for(let k = 0; k < panz.arrOfShells.length; k++){
+                    //let shell = panz.arrOfShells[k];  
+                    panz.arrOfShells[k].moveShells();
+                    console.log("array.lenght=", panz.arrOfShells.length); 
+               
+                }
+            }else{console.log("array of shells is empty");
+            }
 
+        } 
     }
 }
 
