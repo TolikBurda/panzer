@@ -11,7 +11,6 @@ class Panzer {
     movePanzer(directionChange){
         this.position.x += directionChange.x ;
         this.position.y += directionChange.y ; 
-        console.log(this.position);
     }
 
     changeDirectionOfPanzer(keyCode){
@@ -39,10 +38,6 @@ class Panzer {
         
     }
 
-    update(){
-        
-    }
-
     shoting(){
         let offsetPosition = {
             x : this.position.x + 67*this.currentDirection.x,
@@ -63,12 +58,13 @@ class Shell {
 
     createShell(){
         console.log(this.coords.x, this.coords.y);
-        this.moveShells()  
+        this.update()  
     }
 
-    moveShells(){
+    update(){
         this.coords.x += this.currentDirection.x;
         this.coords.y += this.currentDirection.y; 
+        
     }
 
 }
@@ -103,14 +99,14 @@ class Game {
                 40 : 'down',
                 39 : 'right',
                 37 : 'left',
-                79 : 'shot'
+                80 : 'shot'
             },
             {
                 87 : 'up',
                 83 : 'down',
                 68 : 'right',
                 65 : 'left',
-                80 : 'shot'
+                79 : 'shot'
             }
         ]
     }
@@ -130,12 +126,12 @@ class Game {
         }
     }
 
-    update(){
-        for(let i = 0; i < this.arrOfPanzers.length; i++){
-            const panz = this.arrOfPanzers[i];
-            panz.update();
-        }
-    }
+    // update(){
+    //     for(let i = 0; i < this.arrOfPanzers.length; i++){
+    //         const panz = this.arrOfPanzers[i];
+    //         panz.update();
+    //     }
+    // }
 
     panzerControl(){
         document.addEventListener('keydown', (e)=> {
@@ -154,11 +150,11 @@ class Game {
         this.stopGame();
         this.createPanzers();
         this.panzerControl();
-        this.draw.drawField()
-        // this.intervalId = setInterval(()=> {
-        //     this.draw.drawField()
-        //     //this.mainLoop()
-        // }, this.timer);
+        //this.draw.drawField()
+        this.intervalId = setInterval(()=> {
+            this.draw.drawField()
+            this.mainLoop()
+        }, this.timer);
     }
 
     gameControl(){
@@ -170,12 +166,21 @@ class Game {
             this.stopGame();
         } );
     }
+
     mainLoop(){                   
+        // for(let i = 0; i < this.arrOfShells.length; i++){
+        //     let shell = game.arrOfShells[i];
+        //     shell.update();
+        // }
+        // for(let j = 0; j < this.arrOfPanzers.length; j++){
+        //     let panzer = this.arrOfPanzers[j];
+        //     panzer.movePanzer();
+        // }
 
     }
 }
 
-
+//сделать так что бы все переотрисовывалось по таймеру а снаряды еще и двигались в мейнлупе , передать два массива из мейнлупа (танки и снаряды)
 
 class Drawing {
     constructor(){
@@ -194,7 +199,6 @@ class Drawing {
     }
 
     createHtmlElements(){
-        
         let arrOfHtmlElements = [];
 
         let div = document.createElement('div');
@@ -249,14 +253,13 @@ class Drawing {
                 this.ctx.fillStyle = 'red';
                 this.ctx.fillRect(panzerPosition.position.x, panzerPosition.position.y, 10, 10)
                 this.ctx.restore();
-            })
+            })  
+        }
+        for(let i = 0; i < game.arrOfShells.length; i++){
+            let shellPositions = game.arrOfShells[i];
+            this.ctx.fillStyle = 'black';
             
-            // for(let j = 0; j < panzerPosition.arrOfShells.length; j++){
-            //     let shellPositions = panzerPosition.arrOfShells[j];
-            //     this.ctx.fillStyle = 'black';
-                
-            //     this.ctx.fillRect(shellPositions.shellCoords.x, shellPositions.shellCoords.y, 5, 5)
-            // }
+            this.ctx.fillRect(shellPositions.coords.x, shellPositions.coords.y, 5, 5)
         }
 
         this.ctx.strokeStyle = 'blue';
