@@ -1,20 +1,17 @@
 class Panzer {
-    constructor(inputMap, d){
-
+    constructor(inputMap, pubsub){
+        this.pubsub = pubsub;
         this.position = {x: 10, y: 10};// координаты для спавна в переменную вместо 1,1
         this.currentDirection = {x: 0, y: 0};
         this.superInputMap = inputMap;
-        this.draw = d;
         this.directionChangeIntevalId = null;
-        this.arrOfShells = [];
-        //this.shellDirectionChangeIntevalId = null;
+        //this.arrOfShells = [];
     }
 
 
     movePanzer(directionChange){
         this.position.x += directionChange.x ;
-        this.position.y += directionChange.y ;
-        //console.log(this.position);    
+        this.position.y += directionChange.y ; 
     }
 
     changeDirectionOfPanzer(keyCode){
@@ -30,22 +27,23 @@ class Panzer {
             return null
         }
         if (directionChange.x == this.currentDirection.x && directionChange.y == this.currentDirection.y){
-            this.stopChangeDirection()
-            this.directionChangeIntevalId = setInterval(()=>{
-            this.movePanzer(directionChange);   
-            this.draw.drawField(Math.atan2(directionChange.y, directionChange.x))
-            }, 1000/60);
+            //this.movePanzer()
+            //this.stopChangeDirection()
+            
 
         }else if(directionChange.x != this.currentDirection.x || directionChange.y != this.currentDirection.y){
             // this.rotatePanzer(keyCode)
-            this.draw.drawField(Math.atan2(directionChange.y, directionChange.x))
             this.currentDirection = directionChange;   
         }
         
-        
     }
-    stopChangeDirection(){
-        clearInterval(this.directionChangeIntevalId);
+    // stopChangeDirection(){
+    //     clearInterval(this.directionChangeIntevalId);
+    // } 
+
+
+    update(){
+        
     }
     
     // moveShells(){
@@ -55,14 +53,15 @@ class Panzer {
     //         shell.shellCoords.y += this.currentDirection.y;
     //     }
     //}
-    createShells(){
-        const shell = new Shell (this.position, this.currentDirection, this.draw)
-        this.arrOfShells.push(shell)
-    }
+    // createShells(){
+    //     const shell = new Shell (this.position, this.currentDirection, this.draw)
+    //     this.arrOfShells.push(shell)
+    // }
 
-    shooting(keyCode){
-        if(keyCode == 87){
-            this.createShells()
+    shooting(eventKeyCode){
+        if(eventKeyCode == 80){
+            this.pubsub.shootingEvent(eventKeyCode)
+            //this.createShells()80 == p;79 == o
         }
     }
     
@@ -78,9 +77,9 @@ class Shell {
     }
 
     createShell(){
-        this.shellCoords.x = this.position.x + 67*this.currentDirection.x;
-        this.shellCoords.y = this.position.y + 67*this.currentDirection.y;
-        console.log(this.shellCoords);  
+        // this.shellCoords.x = this.position.x + 67*this.currentDirection.x;
+        // this.shellCoords.y = this.position.y + 67*this.currentDirection.y;
+        // console.log(this.shellCoords);  
         //this.moveShells()  
     }
 
@@ -93,31 +92,34 @@ class Shell {
 // class Field {
 //     constructor(){
 //         this.arrOfBlocks = [];
+//          this.arrOfShells = [];
+//          this.arrOfPanzers = [];
+//
 //     }
 //     createMetallBlocks(){
-
 //     }
 //     createBricksBlocks(){
-
 //     }
 // }
 // class SubField extends Field {
-
 // }
 
 class Game {
-    constructor(){
+    constructor(pubsub){
+        this.pubsub = pubsub; ////Подписываешься на ивент стрельбы в игре/// В танке кидаешь ивент, когда жмёшь кнопку
+        this.pubsub.subscribe(80, this, this.createShells);
         this.draw = new Drawing();
         this.gameControl();
         this.intervalId = null;
         this.arrOfPanzers = [];
+        this.arrOfShells = [];
         this.timer = 100;
         this.superInputMap = [
             {
                 38 : 'up',
                 40 : 'down',
                 39 : 'right',
-                37 : 'left'
+                37 : 'left'   //добавить выстрелы в мапу, так как создается по два снаряда
             },
             {
                 87 : 'up',
@@ -129,12 +131,27 @@ class Game {
     }
 
     createPanzers(){
-        const panz = new Panzer(this.superInputMap[0], this.draw);
-        //const panz1 = new Panzer(this.draw.fieldWidth, this.draw.fieldHeight, this.superInputMap[1]);
+        const panz = new Panzer(this.superInputMap[0], this.pubsub);
+        //const panz1 = new Panzer(this.superInputMap[1], this.pubsub);
         this.arrOfPanzers.push(panz);
         //this.arrOfPanzers.push(panz1);
-        //console.log(this.arrOfPanzers);
         
+    }
+
+    createShells(event){
+        if(event){
+            const shell = new Shell();
+            this.arrOfShells.push(shell);
+            console.log(this.arrOfShells.length);
+            
+        }
+        
+    }
+    update(){
+        for(let i = 0; i < this.arrOfPanzers.length; i++){
+            const panz = this.arrOfPanzers[i];
+            panz.update();
+        }
     }
     panzerControl(){
         document.addEventListener('keydown', (e)=> {
@@ -143,11 +160,11 @@ class Game {
                 this.arrOfPanzers[i].shooting(e.keyCode)
             }
         })
-        document.addEventListener('keyup', (e)=>{
-            for(let i = 0; i < this.arrOfPanzers.length; i++){
-                this.arrOfPanzers[i].stopChangeDirection()
-            }    
-        })
+        // document.addEventListener('keyup', (e)=>{
+        //     for(let i = 0; i < this.arrOfPanzers.length; i++){
+        //         this.arrOfPanzers[i].stopChangeDirection()
+        //     }    
+        // })
     }
     stopGame(){
         clearInterval(this.intervalId);
@@ -158,13 +175,13 @@ class Game {
         this.stopGame();
         this.createPanzers();
         this.panzerControl();
-        
-        this.intervalId = setInterval(()=> {
-            this.draw.drawField()
-            this.mainLoop()
-        }, this.timer);
-
+        this.draw.drawField()
+        // this.intervalId = setInterval(()=> {
+        //     this.draw.drawField()
+        //     //this.mainLoop()
+        // }, this.timer);
     }
+
     gameControl(){
         this.draw.startButton.addEventListener('click', ()=>{                  
             this.startGame();  
@@ -174,25 +191,11 @@ class Game {
             this.stopGame();
         } );
     }
-    mainLoop(){
-        for(let i = 0; i < this.arrOfPanzers.length; i++){
-            let panz = this.arrOfPanzers[i];
-            if(panz.arrOfShells.length){
-                for(let k = 0; k < panz.arrOfShells.length; k++){
-                    //let shell = panz.arrOfShells[k];  
-                    panz.arrOfShells[k].moveShells();
-                    this.draw.drawField()
-                    console.log("array.lenght=", panz.arrOfShells.length); 
-                    console.log();
-                    
-               
-                }
-            }else{console.log("array of shells is empty");
-            }
-
-        } 
+    mainLoop(){                                                                     // это не мейн луп а просто движение снарядов 
+        
     }
 }
+
 
 
 class Drawing {
@@ -240,13 +243,15 @@ class Drawing {
         }
         document.body.appendChild(div);
     }
-    // drawShell(){
 
+    // drawShell(){
     // }
-    drawField(angle){
+
+
+    drawField(){  //раньше принимал угол поворота через атан из функции чендждирекшн
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        let a = angle;
+        //let a = angle;
         const img = new Image();
         img.src = "hui.png";
         
@@ -258,7 +263,7 @@ class Drawing {
                 let dy = 64;
                 this.ctx.save();
                 this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
-                this.ctx.rotate(a); //angle
+                this.ctx.rotate(Math.PI); //a = angle
                 this.ctx.translate( -panzerPosition.position.x, -panzerPosition.position.y);
                 this.ctx.drawImage(img, panzerPosition.position.x - dx, panzerPosition.position.y - dy);
                 //console.log('img loaded');
@@ -267,41 +272,54 @@ class Drawing {
                 this.ctx.restore();
             })
             
-            for(let j = 0; j < panzerPosition.arrOfShells.length; j++){
-                let shellPositions = panzerPosition.arrOfShells[j];
-                this.ctx.fillStyle = 'black';
+            // for(let j = 0; j < panzerPosition.arrOfShells.length; j++){
+            //     let shellPositions = panzerPosition.arrOfShells[j];
+            //     this.ctx.fillStyle = 'black';
                 
-                this.ctx.fillRect(shellPositions.shellCoords.x, shellPositions.shellCoords.y, 5, 5)
-            }
+            //     this.ctx.fillRect(shellPositions.shellCoords.x, shellPositions.shellCoords.y, 5, 5)
+            // }
         }
 
         this.ctx.strokeStyle = 'blue';
         this.ctx.strokeRect(0, 0, (this.fieldWidth + 1)*this.cellSize, (this.fieldHeight + 1)*this.cellSize);
         //console.log(1);
-        
     }
-    // drawSells(){
-    //     // this.ctx.fillStyle = 'white';
-    //     // this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    //     for(let j = 0; j < game.arrOfPanzers.length; j++){
-    //         let panzerPosition = game.arrOfPanzers[j]
-    //         for(let j = 0; j < panzerPosition.arrOfShells.length; j++){
-    //             let shellPositions = panzerPosition.arrOfShells[j];
-    //             this.ctx.fillStyle = 'black';
-                
-    //             this.ctx.fillRect(shellPositions.shellCoords.x, shellPositions.shellCoords.y, 5, 5)
-    //         }
-    //     }    
-    // }
 }
 // class ResourceLoder{
 //     constructor(){
-
 //     }
-
 // }
-const game = new Game();
+
+class Subscription {
+    constructor(event, obj, method){
+        this.event = event;
+        this.obj = obj;
+        this.method = method;
+    }
+}
+
+class PubSub {
+    constructor(){
+        this.subscriptions = []
+    }
+    subscribe(event, obj, method){
+        var sub = new Subscription(event, obj, method);
+        this.subscriptions.push(sub)
+    }
+    shootingEvent(eventKeyCode){
+        for (let i = 0; i < this.subscriptions.length; i++) {
+            const sub = this.subscriptions[i];
+            if (sub.event == eventKeyCode) {
+                console.log(eventKeyCode);
+                sub.method.call(sub.obj, eventKeyCode)
+                
+            }
+        }
+    }
+}
+const pubSubInstance = new PubSub();
+const game = new Game(pubSubInstance);
 // const draw = new Drawing(game);
 
 
