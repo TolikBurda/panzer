@@ -4,13 +4,16 @@ class Panzer {
         this.position = {x: 10, y: 10};// координаты для спавна в переменную вместо 1,1
         this.currentDirection = {x: 0, y: 0};
         this.superInputMap = inputMap;
-        this.directionChangeIntevalId = null;
     }
 
 
     movePanzer(directionChange){
-        this.position.x += directionChange.x ;
-        this.position.y += directionChange.y ; 
+        this.position.x += directionChange.x;
+        this.position.y += directionChange.y; 
+    }
+
+    update(){
+
     }
 
     changeDirectionOfPanzer(keyCode){
@@ -21,13 +24,12 @@ class Panzer {
             left: { x: -1, y: 0}
         }   
         if(this.superInputMap[keyCode] == 'shot'){
-            this.shoting()
+            this.shooting();
         }
-        let directionChange = directionMap[this.superInputMap[keyCode]]
-        //console.log(this.superInputMap[keyCode]);
+        let directionChange = directionMap[this.superInputMap[keyCode]];
         
         if(!directionChange){
-            return null
+            return null;
         }
         if (directionChange.x == this.currentDirection.x && directionChange.y == this.currentDirection.y){
             this.movePanzer(directionChange);
@@ -38,7 +40,7 @@ class Panzer {
         
     }
 
-    shoting(){
+    shooting(){
         let offsetPosition = {
             x : this.position.x + 67*this.currentDirection.x,
             y : this.position.y + 67*this.currentDirection.y
@@ -46,7 +48,7 @@ class Panzer {
         this.pubsub.fireEvent('shot', {position: offsetPosition, direction: this.currentDirection})
         //this.createShells()80 == p;79 == o
     }
-    
+
 }
 
 class Shell {
@@ -64,7 +66,6 @@ class Shell {
     update(){
         this.coords.x += this.currentDirection.x;
         this.coords.y += this.currentDirection.y; 
-        
     }
 
 }
@@ -132,6 +133,12 @@ class Game {
     //         panz.update();
     //     }
     // }
+    checkPanzerCollision(){
+
+    }
+    checkShellCollision(){
+
+    }
 
     panzerControl(){
         document.addEventListener('keydown', (e)=> {
@@ -144,13 +151,13 @@ class Game {
     stopGame(){
         clearInterval(this.intervalId);
         this.arrOfPanzers = [];
+        this.arrOfShells = [];
     }
 
     startGame(){
         this.stopGame();
         this.createPanzers();
         this.panzerControl();
-        //this.draw.drawField()
         this.intervalId = setInterval(()=> {
             this.draw.drawField()
             this.mainLoop()
@@ -168,13 +175,13 @@ class Game {
     }
 
     mainLoop(){                   
-        // for(let i = 0; i < this.arrOfShells.length; i++){
-        //     let shell = game.arrOfShells[i];
-        //     shell.update();
-        // }
+        for(let i = 0; i < this.arrOfShells.length; i++){
+            let shell = game.arrOfShells[i];
+            shell.update();
+        }
         // for(let j = 0; j < this.arrOfPanzers.length; j++){
         //     let panzer = this.arrOfPanzers[j];
-        //     panzer.movePanzer();
+        //     panzer.update();
         // }
 
     }
@@ -234,7 +241,6 @@ class Drawing {
     drawField(){  //раньше принимал угол поворота через атан из функции чендждирекшн
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        //let a = angle;
         const img = new Image();
         img.src = "hui.png";
         
@@ -246,7 +252,7 @@ class Drawing {
                 let dy = 64;
                 this.ctx.save();
                 this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
-                this.ctx.rotate(Math.PI); //a = angle
+                this.ctx.rotate(Math.atan2(panzerPosition.currentDirection.y, panzerPosition.currentDirection.x));
                 this.ctx.translate( -panzerPosition.position.x, -panzerPosition.position.y);
                 this.ctx.drawImage(img, panzerPosition.position.x - dx, panzerPosition.position.y - dy);
                 //console.log('img loaded');
