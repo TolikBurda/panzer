@@ -242,7 +242,7 @@ class Drawing {
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         const img = new Image();
-        img.src = "hui.png";
+        img.src = "panz.png";
         
         
         for(let j = 0; j < game.arrOfPanzers.length; j++){
