@@ -90,6 +90,7 @@ class Game {
     constructor(pubsub){
         this.pubsub = pubsub; ////Подписываешься на ивент стрельбы в игре/// В танке кидаешь ивент, когда жмёшь кнопку
         this.pubsub.subscribe('shot', this, this.createShells);
+        this.resourceLoader = new ResourceLoader();
         this.draw = new Drawing();
         this.gameControl();
         this.intervalId = null;
@@ -114,7 +115,7 @@ class Game {
             }
         ]
     }
-
+   
     createPanzers(){
         const panz = new Panzer(this.superInputMap[0], this.pubsub);
         const panz1 = new Panzer(this.superInputMap[1], this.pubsub);
@@ -167,12 +168,19 @@ class Game {
         this.arrOfShells = [];
         this.arrOfBlocks = [];
     }
-
+    checkMethod(){
+        // for(let i = 0; i < this.resourceLoader.length; i++){
+        //     let one = this.resourceLoader[i]
+            
+        // }
+    }
     startGame(){
         this.stopGame();
+        
         this.createPanzers();
         this.createBlocks();
         this.panzerControl();
+        // this.checkMethod();
         this.intervalId = setInterval(()=> {
             this.draw.drawField()
             this.mainLoop()
@@ -253,12 +261,25 @@ class Drawing {
     // }
 
 
-    drawField(){  //раньше принимал угол поворота через атан из функции чендждирекшн
+    drawField(){ 
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        
+        for(let i = 0; i < game.resourceLoader.arrOfImage.length; i++){
+            let img = game.resourceLoader.arrOfImage[i]
+            console.log(i);
+            
+            if(i == 0){
+                console.log('da ravno!');
+                
+            }
+
+        }
         const img = new Image();
         img.src = "panz1.png";
-        console.log(img.width);///поле 20х20
+        
+        //console.log(img.src);
         
         
         
@@ -284,7 +305,7 @@ class Drawing {
             
             this.ctx.fillRect(shellPositions.coords.x, shellPositions.coords.y, 5, 5)
         }
-
+        
         const img1 = new Image();
         img1.src = "stone.jpg";
         for(let k = 0; k < game.arrOfBlocks.length; k++){
@@ -302,10 +323,38 @@ class Drawing {
     }
 
 }
-// class ResourceLoder{
-//     constructor(){
-//     }
-// }
+
+
+
+class ResourceLoader{
+    constructor(){
+        this.arrOfImage = [];
+
+        this.imgOfPanzer = new Image();
+        this.imgOfPanzer.src = "panz1.png";
+
+        this.imgOfStone = new Image();
+        this.imgOfStone.src = "stone.jpg"
+
+        this.arrOfImage.push(this.imgOfPanzer);
+        this.arrOfImage.push(this.imgOfStone);
+        this.loader();
+
+    }
+    loader(){
+        for(let i = 0; i < this.arrOfImage.length; i++){
+            let img = this.arrOfImage[i];
+            img.addEventListener('load', ()=>{
+                console.log('готово, братан!');
+                
+            })
+        }
+    }
+}
+
+
+
+
 
 class Subscription {
     constructor(event, obj, method){
