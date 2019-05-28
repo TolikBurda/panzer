@@ -257,104 +257,83 @@ class Drawing {
         document.body.appendChild(div);
     }
 
-    // drawShell(){
-    // }
-
-
     drawField(){ 
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        
-        for(let i = 0; i < game.resourceLoader.arrOfImage.length; i++){
-            let img = game.resourceLoader.arrOfImage[i]
-            console.log(i);
-            
-            if(i == 0){
-                console.log('da ravno!');
-                
-            }
-
-        }
-        const img = new Image();
-        img.src = "panz1.png";
-        
-        //console.log(img.src);
-        
-        
-        
-        for(let j = 0; j < game.arrOfPanzers.length; j++){
-            let panzerPosition = game.arrOfPanzers[j]
-            img.addEventListener('load', ()=>{
-                let dx = this.cellSize/2;
-                let dy = this.cellSize/2;
+        for(let i = 0; i < game.arrOfPanzers.length; i++){
+            let panzerPosition = game.arrOfPanzers[i];
+            for(let k = i; k < game.resourceLoader.arrOfPanzerImage.length; k++){
+                let img = game.resourceLoader.arrOfPanzerImage[i];
                 this.ctx.save();
                 this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
                 this.ctx.rotate(Math.atan2(panzerPosition.currentDirection.y, panzerPosition.currentDirection.x));
                 this.ctx.translate( -panzerPosition.position.x, -panzerPosition.position.y);
-                this.ctx.drawImage(img, panzerPosition.position.x - dx, panzerPosition.position.y - dy, this.cellSize, this.cellSize);
-                //console.log('img loaded');
-                // this.ctx.fillStyle = 'red';
-                // this.ctx.fillRect(panzerPosition.position.x, panzerPosition.position.y, 2, 2)
+                this.ctx.drawImage(img, panzerPosition.position.x - this.cellSize/2, panzerPosition.position.y - this.cellSize/2, this.cellSize, this.cellSize);
                 this.ctx.restore();
-            })  
+            }
         }
+
+        for(let i = 0; i < game.arrOfBlocks.length; i++){
+            let blockPositions = game.arrOfBlocks[i];
+            for(let k = 0; k < game.resourceLoader.arrOfTextureImage.length; k++){
+                let img = game.resourceLoader.arrOfTextureImage[0];
+                this.ctx.drawImage(img, blockPositions.coords.x * this.cellSize, blockPositions.coords.y * this.cellSize, this.cellSize, this.cellSize);
+            }
+        }
+
         for(let i = 0; i < game.arrOfShells.length; i++){
             let shellPositions = game.arrOfShells[i];
             this.ctx.fillStyle = 'black';
             
             this.ctx.fillRect(shellPositions.coords.x, shellPositions.coords.y, 5, 5)
         }
-        
-        const img1 = new Image();
-        img1.src = "stone.jpg";
-        for(let k = 0; k < game.arrOfBlocks.length; k++){
-            let blockPositions = game.arrOfBlocks[k];
-            img.addEventListener('load', ()=>{
-                // let dx = img1.width/2;
-                // let dy = img1.height/2;
-                this.ctx.drawImage(img1, blockPositions.coords.x * this.cellSize, blockPositions.coords.y * this.cellSize, this.cellSize, this.cellSize);
-            })
-        }
 
         this.ctx.strokeStyle = 'blue';
         this.ctx.strokeRect(0, 0, (this.fieldWidth + 1)*this.cellSize, (this.fieldHeight + 1)*this.cellSize);
-        //console.log(1);
     }
 
 }
 
-
-
 class ResourceLoader{
     constructor(){
-        this.arrOfImage = [];
+        this.arrOfPanzerImage = [];
+        this.arrOfTextureImage = [];
 
-        this.imgOfPanzer = new Image();
-        this.imgOfPanzer.src = "panz1.png";
+        this.imgOfPanzer1 = new Image();
+        this.imgOfPanzer1.src = "panz1.png";
+
+        this.imgOfPanzer2 = new Image();
+        this.imgOfPanzer2.src = "panz2.png";
 
         this.imgOfStone = new Image();
-        this.imgOfStone.src = "stone.jpg"
+        this.imgOfStone.src = "stone.jpg";
 
-        this.arrOfImage.push(this.imgOfPanzer);
-        this.arrOfImage.push(this.imgOfStone);
+        this.imgOfMetal = new Image();
+        this.imgOfMetal.src = "metal.jpg";
+
+        this.arrOfPanzerImage.push(this.imgOfPanzer1);
+        this.arrOfPanzerImage.push(this.imgOfPanzer2);
+        this.arrOfTextureImage.push(this.imgOfStone);
+        this.arrOfTextureImage.push(this.imgOfMetal);
         this.loader();
 
     }
     loader(){
-        for(let i = 0; i < this.arrOfImage.length; i++){
-            let img = this.arrOfImage[i];
+        for(let i = 0; i < this.arrOfPanzerImage.length; i++){
+            let img = this.arrOfPanzerImage[i];
             img.addEventListener('load', ()=>{
-                console.log('готово, братан!');
-                
+                console.log('иконки танков загружены!');
             })
         }
+        for(let i = 0; i < this.arrOfTextureImage.length; i++){
+            let img = this.arrOfTextureImage[i];
+            img.addEventListener('load', ()=>{
+                console.log('иконки текстур загружены!');
+            })
+        }    
     }
 }
-
-
-
-
 
 class Subscription {
     constructor(event, obj, method){
