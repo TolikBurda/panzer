@@ -1,19 +1,25 @@
 class Panzer {
-    constructor(inputMap, pubsub){
+    constructor(inputMap, pubsub, x, y){
         this.pubsub = pubsub;
-        this.position = {x: 10, y: 10};// координаты для спавна в переменную вместо 1,1
+        this.position = {x: x, y: y};// координаты для спавна в переменную вместо 1,1
         this.currentDirection = {x: 0, y: 0};
         this.superInputMap = inputMap;
     }
 
 
-    movePanzer(directionChange){
-        this.position.x += directionChange.x;
-        this.position.y += directionChange.y; 
+    movePanzer(){
+        this.position.x += this.currentDirection.x;
+        this.position.y += this.currentDirection.y; 
+        console.log('panzer position:',this.position);
+        
+    }
+    stopPanzer(){
+        this.position.x = this.position.x;
+        this.position.y = this.position.y; 
     }
 
     update(){
-
+        this.position
     }
 
     changeDirectionOfPanzer(keyCode){
@@ -32,7 +38,8 @@ class Panzer {
             return null;
         }
         if (directionChange.x == this.currentDirection.x && directionChange.y == this.currentDirection.y){
-            this.movePanzer(directionChange);
+            this.currentDirection = directionChange;
+            this.movePanzer();
 
         }else if(directionChange.x != this.currentDirection.x || directionChange.y != this.currentDirection.y){
             this.currentDirection = directionChange;   
@@ -66,16 +73,17 @@ class Shell {
     update(){
         this.coords.x += this.currentDirection.x;
         this.coords.y += this.currentDirection.y; 
+        console.log('shell position:', this.coords, );
     }
 
 }
 
 
 class Block {
-    constructor(x, y){
+    constructor(x, y){  ///(x,y)
         // this.coords = {
-        //     x: 10,
-        //     y: 10}
+        //     x: 50,
+        //     y: 50}
         this.coords = {
             x: x,
             y: y
@@ -117,27 +125,32 @@ class Game {
     }
    
     createPanzers(){
-        const panz = new Panzer(this.superInputMap[0], this.pubsub);
-        const panz1 = new Panzer(this.superInputMap[1], this.pubsub);
-        this.arrOfPanzers.push(panz);
-        this.arrOfPanzers.push(panz1);
+        for(let i = 0; i < 2; i++){
+            let x = Math.round(Math.random() * this.draw.fieldWidth);
+            let y = Math.round(Math.random() * this.draw.fieldHeight);
+            const panz = new Panzer(this.superInputMap[i], this.pubsub, x, y);
+            this.arrOfPanzers.push(panz);
+        }
+        // const panz1 = new Panzer(this.superInputMap[1], this.pubsub, x, y);
+        // this.arrOfPanzers.push(panz1);
     }
     createBlocks(){
-        for(let i = 0; i < 10; i++){
-            let x = Math.floor(Math.random() * 20);
-            let y = Math.floor(Math.random() * 20);
+        for(let i = 0; i < 2; i++){
+            let x = Math.round(Math.random() * this.draw.fieldWidth);
+            let y = Math.round(Math.random() * this.draw.fieldHeight);
             const block = new Block(x, y);
             this.arrOfBlocks.push(block);
-            console.log(this.arrOfBlocks.length);
-            
+            console.log(this.arrOfBlocks[i].coords);   
         }
+        // const block = new Block();
+        // this.arrOfBlocks.push(block);
     }
 
     createShells(data){
         if(data){
             const shell = new Shell(data);
             this.arrOfShells.push(shell);
-            //console.log(this.arrOfShells.length);
+            // console.log(this.arrOfShells.length);
         }
     }
 
@@ -147,11 +160,44 @@ class Game {
     //         panz.update();
     //     }
     // }
-    checkPanzerCollision(){
-
-    }
+    
     checkShellCollision(){
+        for(let i = 0; i < this.arrOfShells.length; i++){
+            let shellPositions = this.arrOfShells[i];
+            
+            for(let k = 0; k < this.arrOfPanzers.length; k++){
+                let panzerPosition = this.arrOfPanzers[k];
+                if(shellPositions.coords.x == panzerPosition.position.x && shellPositions.coords.y == panzerPosition.position.y){
+                    console.log('POPAL!!!');
+                    
+                }
+            }
+        }
+    }
 
+    checkPanzerCollision(){
+        for(let i = 0; i < this.arrOfPanzers.length; i++){
+            let panzerPosition = this.arrOfPanzers[i];
+            for(let k = 0; k < this.arrOfBlocks.length; k++){
+                let blockPositions = this.arrOfBlocks[k];
+                console.log(blockPositions.coords);
+                
+                if(panzerPosition.position.x + (panzerPosition.currentDirection.x*this.draw.cellSize) == blockPositions.coords.x && panzerPosition.position.y + (panzerPosition.currentDirection.y*this.draw.cellSize)  == blockPositions.coords.y){
+                    
+                    console.log('VREZALSA!!!');
+                    
+                }
+            }
+        }
+    }
+    checkBordersCollision(){
+        for(let i = 0; i < this.arrOfShells.length; i++){
+            let shell = this.arrOfShells[i];  ///забил хуй, решил не писать проверку на вылет, а огородить все поле блоками и писать проверку только на столкновение с танком/блоком
+            // if(){
+            //     console.log('fffatit');
+            //     this.arrOfShells.splice(this.arrOfShells[i], 1); 
+            // }
+        }
     }
 
     panzerControl(){
@@ -162,30 +208,7 @@ class Game {
         })
     }
 
-    stopGame(){
-        clearInterval(this.intervalId);
-        this.arrOfPanzers = [];
-        this.arrOfShells = [];
-        this.arrOfBlocks = [];
-    }
-    checkMethod(){
-        // for(let i = 0; i < this.resourceLoader.length; i++){
-        //     let one = this.resourceLoader[i]
-            
-        // }
-    }
-    startGame(){
-        this.stopGame();
-        
-        this.createPanzers();
-        this.createBlocks();
-        this.panzerControl();
-        // this.checkMethod();
-        this.intervalId = setInterval(()=> {
-            this.draw.drawField()
-            this.mainLoop()
-        }, this.timer);
-    }
+    
 
     gameControl(){
         this.draw.startButton.addEventListener('click', ()=>{                  
@@ -196,17 +219,53 @@ class Game {
             this.stopGame();
         } );
     }
+    stopGame(){
+        clearInterval(this.intervalId);
+        this.arrOfPanzers = [];
+        this.arrOfShells = [];
+        this.arrOfBlocks = [];
+    }
 
-    mainLoop(){                   
+    checkMethod(){
+        // for(let i = 0; i < this.resourceLoader.length; i++){
+        //     let one = this.resourceLoader[i]
+            
+        // }
+    }
+    startGame(){
+        this.stopGame();
+        this.createBlocks();
+        this.createPanzers();
+        ;
+        this.panzerControl();
+        // this.checkMethod();
+        this.intervalId = setInterval(()=> {
+            
+            this.mainLoop()
+            
+        }, this.timer);
+    }
+
+    
+
+    mainLoop(){ 
+        this.checkPanzerCollision()
+        this.checkShellCollision();
+        //this.checkBordersCollision();         не подключено        
         for(let i = 0; i < this.arrOfShells.length; i++){
             let shell = game.arrOfShells[i];
             shell.update();
+            // console.log(this.draw.fieldHeight);
+            console.log('shells in arr', this.arrOfShells.length);
         }
-        // for(let j = 0; j < this.arrOfPanzers.length; j++){
-        //     let panzer = this.arrOfPanzers[j];
-        //     panzer.update();
-        // }
 
+        
+        for(let j = 0; j < this.arrOfPanzers.length; j++){
+            let panzer = this.arrOfPanzers[j];           
+            //panzer.movePanzer();
+            // panzer.stopPanzer() 
+        }
+        this.draw.drawField(this); 
     }
 }
 
@@ -219,13 +278,13 @@ class Drawing {
         this.stopButton = null;
         this.createHtmlElements();
         this.ctx = this.canvas.getContext('2d');
-        this.fieldWidth = 20;
-        this.fieldHeight = 20;
+        this.fieldWidth = 400;
+        this.fieldHeight = 400;
         this.cellSize = 20;
-        this.scale = this.cellSize * 3;
+        // this.scale = this.cellSize * 3;
 
-        this.canvas.width = (this.fieldWidth + 1)*this.cellSize;
-        this.canvas.height = (this.fieldHeight + 1)*this.cellSize; 
+        this.canvas.width = (this.fieldWidth);
+        this.canvas.height = (this.fieldHeight); 
     }
 
     createHtmlElements(){
@@ -257,7 +316,7 @@ class Drawing {
         document.body.appendChild(div);
     }
 
-    drawField(){ 
+    drawField(game){
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
@@ -277,8 +336,8 @@ class Drawing {
         for(let i = 0; i < game.arrOfBlocks.length; i++){
             let blockPositions = game.arrOfBlocks[i];
             for(let k = 0; k < game.resourceLoader.arrOfTextureImage.length; k++){
-                let img = game.resourceLoader.arrOfTextureImage[0];
-                this.ctx.drawImage(img, blockPositions.coords.x * this.cellSize, blockPositions.coords.y * this.cellSize, this.cellSize, this.cellSize);
+                let img = game.resourceLoader.arrOfTextureImage[1];
+                this.ctx.drawImage(img, blockPositions.coords.x -this.cellSize/2, blockPositions.coords.y -this.cellSize/2, this.cellSize, this.cellSize);
             }
         }
 
@@ -290,7 +349,7 @@ class Drawing {
         }
 
         this.ctx.strokeStyle = 'blue';
-        this.ctx.strokeRect(0, 0, (this.fieldWidth + 1)*this.cellSize, (this.fieldHeight + 1)*this.cellSize);
+        this.ctx.strokeRect(0, 0, this.fieldWidth, this.fieldHeight);
     }
 
 }
