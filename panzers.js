@@ -1,3 +1,12 @@
+
+var t = fetch('level_1.json')
+t.then(res => {
+    return res.json()
+}).then(data => {
+    console.log(data);
+    
+})
+
 class Panzer {
     constructor(inputMap, pubsub, x, y){
         this.pubsub = pubsub;
@@ -145,6 +154,7 @@ class Game {
         // this.arrOfPanzers.push(panz1);
     }
     createBlocks(){
+        // for(let i = 0; i < this.)
         for(let i = 0; i < 2; i++){
             let x = Math.round(Math.random() * this.draw.fieldWidth);
             let y = Math.round(Math.random() * this.draw.fieldHeight);
@@ -338,7 +348,7 @@ class Drawing {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         for(let i = 0; i < game.arrOfPanzers.length; i++){
             let panzerPosition = game.arrOfPanzers[i];
-            let img = game.resourceLoader.arrOfPanzerImage[i];
+            let img = game.resourceLoader.imageBox.blueTank;
             this.ctx.save();
             this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
             this.ctx.rotate(Math.atan2(panzerPosition.currentDirection.y, panzerPosition.currentDirection.x));
@@ -349,9 +359,8 @@ class Drawing {
 
         for(let i = 0; i < game.arrOfBlocks.length; i++){
             let blockPositions = game.arrOfBlocks[i];
-            let img = game.resourceLoader.arrOfTextureImage[i];
+            let img = game.resourceLoader.imageBox.redTank;
             this.ctx.drawImage(img, blockPositions.coords.x - this.cellSize/2, blockPositions.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
-            
         }
 
         for(let i = 0; i < game.arrOfShells.length; i++){
@@ -369,41 +378,40 @@ class Drawing {
 
 class ResourceLoader{
     constructor(){
-        this.arrOfPanzerImage = [];
-        this.arrOfTextureImage = [];
-
-        this.imgOfPanzer1 = new Image();
-        this.imgOfPanzer1.src = "panz1.png";
-
-        this.imgOfPanzer2 = new Image();
-        this.imgOfPanzer2.src = "panz2.png";
-
-        this.imgOfStone = new Image();
-        this.imgOfStone.src = "stone.jpg";
-
-        this.imgOfMetal = new Image();
-        this.imgOfMetal.src = "metal.jpg";
-
-        this.arrOfPanzerImage.push(this.imgOfPanzer1);
-        this.arrOfPanzerImage.push(this.imgOfPanzer2);
-        this.arrOfTextureImage.push(this.imgOfStone);
-        this.arrOfTextureImage.push(this.imgOfMetal);
-        this.loader();
-
+        this.imageBox = {
+            blueTank : null,
+            redTank : null,
+            stone : null,
+            metal : null
+        };
+        this.srcOfImageMap = {
+            blueTank : 'panz1.png',
+            redTank : 'panz2.png',
+            stone : 'stone.jpg',
+            metal : 'metal.jpg'
+        };
+        this.loadAllImages();
     }
-    loader(){
-        for(let i = 0; i < this.arrOfPanzerImage.length; i++){
-            let img = this.arrOfPanzerImage[i];
-            img.addEventListener('load', ()=>{
-                console.log('иконки танков загружены!');
+    loadImage(url){
+        return new Promise((resolve, reject) => {
+            let img = new Image();
+            img.addEventListener('load', () => resolve(img));
+            img.addEventListener('error', () => {
+              reject(new Error(`Failed to load image's URL: ${url}`));
+            });
+            img.src = url;
+        });
+    }
+    loadAllImages(){
+        for(let imageName in this.srcOfImageMap){
+            let src = this.srcOfImageMap[imageName]; 
+            this.loadImage(src)
+            .then((img) => {
+            this.imageBox[imageName] = img
+            console.log(this.imageBox);
             })
+            .catch(error => console.error(error));
         }
-        for(let i = 0; i < this.arrOfTextureImage.length; i++){
-            let img = this.arrOfTextureImage[i];
-            img.addEventListener('load', ()=>{
-                console.log('иконки текстур загружены!');
-            })
-        }    
     }
 }
 
