@@ -14,21 +14,14 @@ class Panzer {
         this.currentDirection = {x: 0, y: 0};
         this.superInputMap = inputMap;
     }
-
-
     movePanzer(){
         this.position.x += this.currentDirection.x;
         this.position.y += this.currentDirection.y;
     }
-    stopPanzer(){
-        this.position.x = this.position.x;
-        this.position.y = this.position.y; 
+    stopDirectionChange(){
+        this.position.x -= this.currentDirection.x;
+        this.position.y -= this.currentDirection.y;
     }
-
-    update(){
-        this.position
-    }
-
     changeDirectionOfPanzer(keyCode){
         var directionMap = {
             up : { x: 0, y: -1},
@@ -47,13 +40,10 @@ class Panzer {
         if (directionChange.x == this.currentDirection.x && directionChange.y == this.currentDirection.y){
             this.currentDirection = directionChange;
             this.movePanzer();
-
         }else if(directionChange.x != this.currentDirection.x || directionChange.y != this.currentDirection.y){
             this.currentDirection = directionChange;   
-        }
-        
+        } 
     }
-
     shooting(){
         let offsetPosition = {
             x : this.position.x + 10*this.currentDirection.x,
@@ -61,7 +51,6 @@ class Panzer {
         }
         this.pubsub.fireEvent('shot', {position: offsetPosition, direction: this.currentDirection})
     }
-
 }
 
 class Shell {
@@ -69,26 +58,21 @@ class Shell {
         this.currentDirection = coords.direction;
         this.coords = coords.position;
         this.shellSpeed = 10;
-        this.createShell();
-        
+        this.createShell(); 
     }
-
     createShell(){
         console.log(this.coords.x, this.coords.y);
         this.update()  
     }
-
     update(){
         this.coords.x += this.shellSpeed*this.currentDirection.x;
         this.coords.y += this.shellSpeed*this.currentDirection.y; 
         console.log('shell position:', this.coords, );
     }
-
 }
 
-
 class Block {
-    constructor(x, y){  ///(x,y)
+    constructor(x, y, type){  ///(x,y)
         // this.coords = {
         //     x: 50,
         //     y: 50}
@@ -96,7 +80,7 @@ class Block {
             x: x,
             y: y
         };
-        this.type = null;
+        this.type = type;
     }
 }
 // class SubField extends Field {
@@ -106,9 +90,7 @@ class Game {
     constructor(pubsub){
         this.pubsub = pubsub;
         this.pubsub.subscribe('shot', this, this.createShells);
-        //this.resourceLoader = new ResourceLoader();
         this.draw = new Drawing();
-        //this.gameControl();
         this.intervalId = null;
         this.arrOfPanzers = [];
         this.arrOfShells = [];
@@ -159,16 +141,26 @@ class Game {
         }
     }
     createBlocks(){
-        // for(let i = 0; i < this.)
         for(let i = 0; i < 2; i++){
             let x = Math.round(Math.random() * this.draw.fieldWidth);
             let y = Math.round(Math.random() * this.draw.fieldHeight);
-            const block = new Block(x, y);
+            const block = new Block(x, y, 0);
             this.arrOfBlocks.push(block);
             console.log(this.arrOfBlocks[i].coords);   
         }
-        // const block = new Block();
-        // this.arrOfBlocks.push(block);
+    }
+    checkMethod(){
+        for(let i = 0; i < this.draw.fieldWidth; i += this.draw.cellSize){
+            let x = i;
+            let y = 1;
+            console.log(x);
+            const block = new Block(x + this.draw.cellSize/2, y + this.draw.cellSize/2, 1);
+            this.arrOfBlocks.push(block);
+        }
+        const block1 = new Block(10*this.draw.cellSize, 12*this.draw.cellSize, 0);
+        this.arrOfBlocks.push(block1);
+        console.log(this.arrOfBlocks.length);
+        
     }
     createShells(data){
         if(data){
@@ -204,48 +196,56 @@ class Game {
                 } 
             }
             for(let k = 0; k < this.arrOfBlocks.length; k++){
-                let blockPosition = this.arrOfBlocks[k];
-                let blockCoord = blockPosition.coords;
+                let block = this.arrOfBlocks[k];
+                let blockCoord = block.coords;
                 let collX = shellCoord.x > (blockCoord.x - cellSize/2) && shellCoord.x < (blockCoord.x + cellSize/2);
                 let collY = shellCoord.y > (blockCoord.y - cellSize/2) && shellCoord.y < (blockCoord.y + cellSize/2);
                 if (collX && collY){
-                    console.log('POPAL V BLOCK!!!');
-                    this.clearArrOfBlocks(k);
-                    this.clearArrOfShells(i);
+                    if(block.type == 1){
+                        console.log('POPAL V BLOCK!!!');
+                        this.clearArrOfShells(i);
+                    }else{
+                        console.log('POPAL V BLOCK!!!');
+                        this.clearArrOfBlocks(k);
+                        this.clearArrOfShells(i);
+                    }
                 }
             }                
         }
     }
     checkPanzerCollision(){
         for(let i = 0; i < this.arrOfPanzers.length; i++){
-            let panzerPosition = this.arrOfPanzers[i];
-            let panzerCoord = panzerPosition.position;
+            let panzer = this.arrOfPanzers[i];
+            let panzerCoord = panzer.position;
             let cellSize = this.draw.cellSize;
             for(let k = 0; k < this.arrOfBlocks.length; k++){
-                let blockPosition = this.arrOfBlocks[k];
-                let blockCoord = blockPosition.coords;
-                if(panzerCoord.x + (panzerPosition.currentDirection.x*this.draw.cellSize) == blockCoord.x - cellSize/2 && panzerCoord.y + (panzerPosition.currentDirection.y*this.draw.cellSize)  == blockCoord.y- cellSize/2){
+                let block = this.arrOfBlocks[k];
+                let blockCoord = block.coords;
+                let collX = (blockCoord.x + cellSize/2) > (panzerCoord.x - cellSize/2) && (blockCoord.x - cellSize/2) < (panzerCoord.x + cellSize/2);
+                let collY = (blockCoord.y + cellSize/2) > (panzerCoord.y - cellSize/2) && (blockCoord.y - cellSize/2) < (panzerCoord.y + cellSize/2);
+                if(collX && collY){
+                    panzer.stopDirectionChange();
                     console.log('VREZALSA!!!');
-                    
                 }
             }
         }
     }
-    checkBordersCollision(){
-        for(let i = 0; i < this.arrOfShells.length; i++){
-            let shell = this.arrOfShells[i];  ///забил хуй, решил не писать проверку на вылет, а огородить все поле блоками и писать проверку только на столкновение с танком/блоком
-        }
+    checkPanzerTailCollision(){
+
+        // for(let i = 0; i < this.arrOfShells.length; i++){
+        //     let shell = this.arrOfShells[i];  ///забил хуй, решил не писать проверку на вылет, а огородить все поле блоками и писать проверку только на столкновение с танком/блоком
+        // }
     }
 
     panzerControl(){
         document.addEventListener('keydown', (e)=> {
             this.pressedKeys[e.keyCode] = true;
         })
+
         document.addEventListener('keyup', (e)=> {
             this.pressedKeys[e.keyCode] = false;
         })
     }
-
     gameControl(){
         this.draw.startButton.addEventListener('click', ()=>{                  
             this.startGame();  
@@ -262,16 +262,14 @@ class Game {
         this.arrOfBlocks = [];
     }
 
-    checkMethod(){
-        
-    }
+
 
     startGame(){
         this.stopGame();
-        this.createBlocks();
+        this.checkMethod();
+        //this.createBlocks();
         this.createPanzers();
         this.panzerControl();
-        // this.checkMethod();
         this.intervalId = setInterval(()=> {        
             this.mainLoop()
         }, this.timer);
@@ -346,7 +344,7 @@ class Drawing {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         for(let i = 0; i < game.arrOfPanzers.length; i++){
             let panzerPosition = game.arrOfPanzers[i];
-            let img = game.imageBox.blueTank;
+            let img = game.imageBox.redTank;
             this.ctx.save();
             this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
             this.ctx.rotate(Math.atan2(panzerPosition.currentDirection.y, panzerPosition.currentDirection.x));
@@ -356,14 +354,15 @@ class Drawing {
         }
 
         for(let i = 0; i < game.arrOfBlocks.length; i++){
-            let blockPositions = game.arrOfBlocks[i];
-            let img = game.imageBox.stone;
-            this.ctx.drawImage(img, blockPositions.coords.x - this.cellSize/2, blockPositions.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
+            let block = game.arrOfBlocks[i];
+            if(block.type == 1){
+                let img = game.imageBox.metal;
+            this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
+            }else{
+                let img = game.imageBox.stone;
+                this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
+            }
         }
-
-        // let blockPositions = game.arrOfBlocks[1];
-        // let img = game.imageBox.metal;
-        // this.ctx.drawImage(img, blockPositions.coords.x - this.cellSize/2, blockPositions.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
 
         for(let i = 0; i < game.arrOfShells.length; i++){
             let shellPositions = game.arrOfShells[i];
@@ -382,12 +381,6 @@ class ResourceLoader{
     constructor(){
         this.pubSubInstance = new PubSub();
         this.game = new Game(this.pubSubInstance)
-        // this.imageBox = {
-        //     blueTank : null,
-        //     redTank : null,
-        //     stone : null,
-        //     metal : null
-        // };
         this.srcOfImageMap = {
             blueTank : 'panz1.png',
             redTank : 'panz2.png',
@@ -454,7 +447,6 @@ class PubSub {
         }
     }
 }
-// const pubSubInstance = new PubSub();
-// const game = new Game(pubSubInstance);
+
 const initialization = new ResourceLoader();
 
