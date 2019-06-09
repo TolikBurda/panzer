@@ -68,7 +68,9 @@ class Shell {
     constructor(coords){
         this.currentDirection = coords.direction;
         this.coords = coords.position;
+        this.shellSpeed = 10;
         this.createShell();
+        
     }
 
     createShell(){
@@ -77,8 +79,8 @@ class Shell {
     }
 
     update(){
-        this.coords.x += this.currentDirection.x;
-        this.coords.y += this.currentDirection.y; 
+        this.coords.x += this.shellSpeed*this.currentDirection.x;
+        this.coords.y += this.shellSpeed*this.currentDirection.y; 
         console.log('shell position:', this.coords, );
     }
 
@@ -104,10 +106,9 @@ class Game {
     constructor(pubsub){
         this.pubsub = pubsub;
         this.pubsub.subscribe('shot', this, this.createShells);
-
-        this.resourceLoader = new ResourceLoader();
+        //this.resourceLoader = new ResourceLoader();
         this.draw = new Drawing();
-        this.gameControl();
+        //this.gameControl();
         this.intervalId = null;
         this.arrOfPanzers = [];
         this.arrOfShells = [];
@@ -141,8 +142,14 @@ class Game {
                 79 : 'shot'
             }
         ]
+        this.imageBox = {
+            blueTank : null,
+            redTank : null,
+            stone : null,
+            metal : null
+        };
     }
-   
+
     createPanzers(){
         for(let i = 0; i < 2; i++){
             let x = Math.round(Math.random() * this.draw.fieldWidth);
@@ -150,8 +157,6 @@ class Game {
             const panz = new Panzer(this.superInputMap[i], this.pubsub, x, y);
             this.arrOfPanzers.push(panz);            
         }
-        // const panz1 = new Panzer(this.superInputMap[1], this.pubsub, x, y);
-        // this.arrOfPanzers.push(panz1);
     }
     createBlocks(){
         // for(let i = 0; i < this.)
@@ -165,7 +170,6 @@ class Game {
         // const block = new Block();
         // this.arrOfBlocks.push(block);
     }
-
     createShells(data){
         if(data){
             const shell = new Shell(data);
@@ -173,12 +177,6 @@ class Game {
         }
     }
 
-    // update(){
-    //     for(let i = 0; i < this.arrOfPanzers.length; i++){
-    //         const panz = this.arrOfPanzers[i];
-    //         panz.update();
-    //     }
-    // }
     clearArrOfShells(shellToDel){
         this.arrOfShells.splice(shellToDel, 1);
     }
@@ -188,6 +186,7 @@ class Game {
     clearArrOfPanzers(panzerToDel){
         this.arrOfPanzers.splice(panzerToDel, 1);
     }
+
     checkShellCollision(){
         for(let i = 0; i < this.arrOfShells.length; i++){
             let shellPositions = this.arrOfShells[i];
@@ -217,7 +216,6 @@ class Game {
             }                
         }
     }
-
     checkPanzerCollision(){
         for(let i = 0; i < this.arrOfPanzers.length; i++){
             let panzerPosition = this.arrOfPanzers[i];
@@ -292,7 +290,7 @@ class Game {
         this.checkShellCollision();
         //this.checkBordersCollision();         не подключено        
         for(let i = 0; i < this.arrOfShells.length; i++){
-            let shell = game.arrOfShells[i];
+            let shell = this.arrOfShells[i];
             shell.update();
             console.log('shells in arr', this.arrOfShells.length);
         }
@@ -348,7 +346,7 @@ class Drawing {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         for(let i = 0; i < game.arrOfPanzers.length; i++){
             let panzerPosition = game.arrOfPanzers[i];
-            let img = game.resourceLoader.imageBox.blueTank;
+            let img = game.imageBox.blueTank;
             this.ctx.save();
             this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
             this.ctx.rotate(Math.atan2(panzerPosition.currentDirection.y, panzerPosition.currentDirection.x));
@@ -359,9 +357,13 @@ class Drawing {
 
         for(let i = 0; i < game.arrOfBlocks.length; i++){
             let blockPositions = game.arrOfBlocks[i];
-            let img = game.resourceLoader.imageBox.redTank;
+            let img = game.imageBox.stone;
             this.ctx.drawImage(img, blockPositions.coords.x - this.cellSize/2, blockPositions.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
         }
+
+        // let blockPositions = game.arrOfBlocks[1];
+        // let img = game.imageBox.metal;
+        // this.ctx.drawImage(img, blockPositions.coords.x - this.cellSize/2, blockPositions.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
 
         for(let i = 0; i < game.arrOfShells.length; i++){
             let shellPositions = game.arrOfShells[i];
@@ -378,12 +380,14 @@ class Drawing {
 
 class ResourceLoader{
     constructor(){
-        this.imageBox = {
-            blueTank : null,
-            redTank : null,
-            stone : null,
-            metal : null
-        };
+        this.pubSubInstance = new PubSub();
+        this.game = new Game(this.pubSubInstance)
+        // this.imageBox = {
+        //     blueTank : null,
+        //     redTank : null,
+        //     stone : null,
+        //     metal : null
+        // };
         this.srcOfImageMap = {
             blueTank : 'panz1.png',
             redTank : 'panz2.png',
@@ -392,7 +396,7 @@ class ResourceLoader{
         };
         this.loadAllImages();
     }
-    loadImage(url){
+    loadImage(url, imageName){
         return new Promise((resolve, reject) => {
             let img = new Image();
             img.addEventListener('load', () => resolve(img));
@@ -400,18 +404,28 @@ class ResourceLoader{
               reject(new Error(`Failed to load image's URL: ${url}`));
             });
             img.src = url;
+            console.log(imageName + " loaded");
         });
     }
     loadAllImages(){
+        let promises = [];
         for(let imageName in this.srcOfImageMap){
             let src = this.srcOfImageMap[imageName]; 
-            this.loadImage(src)
-            .then((img) => {
-            this.imageBox[imageName] = img
-            console.log(this.imageBox);
+            const promise = this.loadImage(src, imageName)
+                .then((img) => {
+                    this.game.imageBox[imageName] = img 
+            })
+            promises.push(promise);
+        }
+        let promiseAll = Promise.all(promises);
+            
+        promiseAll
+            .then(()=>{
+                console.log('everything loaded');
+                this.game.gameControl();
             })
             .catch(error => console.error(error));
-        }
+        
     }
 }
 
@@ -440,6 +454,7 @@ class PubSub {
         }
     }
 }
-const pubSubInstance = new PubSub();
-const game = new Game(pubSubInstance);
+// const pubSubInstance = new PubSub();
+// const game = new Game(pubSubInstance);
+const initialization = new ResourceLoader();
 
