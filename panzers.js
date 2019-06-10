@@ -87,11 +87,12 @@ class Block {
 // }
 
 class Game {
-    constructor(pubsub){
-        this.pubsub = pubsub;
+    constructor(){
+        this.pubsub = new PubSub();;
         this.pubsub.subscribe('shot', this, this.createShells);
-        this.resourceLoader = new ResourceLoader(); 
-        this.loadAllImages();
+        this.resourceLoader = new ResourceLoader(); //вот здесь сделать инт на промис 
+        //this.resourceLoader.loadAllImages().then()
+        this.initialization();
         this.draw = new Drawing();
         this.intervalId = null;
         this.arrOfPanzers = [];
@@ -126,30 +127,17 @@ class Game {
                 79 : 'shot'
             }
         ]
-        this.imageBox = {
-            blueTank : null,
-            redTank : null,
-            stone : null,
-            metal : null
-        };
+        // this.imageBox = {
+        //     blueTank : null,
+        //     redTank : null,
+        //     stone : null,
+        //     metal : null
+        // };
     }
-    loadAllImages(){
-        let promises = [];
-        for(let imageName in this.resourceLoader.srcOfImageMap){
-            let src = this.resourceLoader.srcOfImageMap[imageName]; 
-            const promise = this.resourceLoader.loadImage(src, imageName)
-                .then((img) => {
-                    this.imageBox[imageName] = img
-            })
-            promises.push(promise);
-        }
-        let promiseAll = Promise.all(promises);
-            
-        promiseAll
+    initialization(){
+        this.resourceLoader.loadAllImages()
             .then(()=>{
-                console.log('everything loaded');
-                this.gameControl();
-            })
+                this.gameControl()})
             .catch(error => console.error(error));
     }
     createPanzers(){
@@ -173,7 +161,7 @@ class Game {
         for(let i = 0; i < this.draw.fieldWidth; i += this.draw.cellSize){
             let x = i;
             let y = 1;
-            console.log(x);
+            //console.log(x);
             const block = new Block(x + this.draw.cellSize/2, y + this.draw.cellSize/2, 1);
             this.arrOfBlocks.push(block);
         }
@@ -281,9 +269,6 @@ class Game {
         this.arrOfShells = [];
         this.arrOfBlocks = [];
     }
-
-
-
     startGame(){
         this.stopGame();
         this.checkMethod();
@@ -399,23 +384,45 @@ class Drawing {
 
 class ResourceLoader{
     constructor(){
+        this.imageBox = {
+            blueTank : null,
+            redTank : null,
+            stone : null,
+            metal : null
+        };
         this.srcOfImageMap = {
             blueTank : 'panz1.png',
             redTank : 'panz2.png',
             stone : 'stone.jpg',
             metal : 'metal.jpg'
         };
+        //this.loadAllImages();
     }
     loadImage(url, imageName){
         return new Promise((resolve, reject) => {
-            let img = new Image();
-            img.addEventListener('load', () => resolve(img));
-            img.addEventListener('error', () => {
-              reject(new Error(`Failed to load image's URL: ${url}`));
-            });
-            img.src = url;
-            console.log(imageName + " loaded");
+            setTimeout(()=>{
+
+                let img = new Image();
+                img.addEventListener('load', () => resolve(img));
+                img.addEventListener('error', () => {
+                  reject(new Error(`Failed to load image's URL: ${url}`));
+                });
+                img.src = url;
+                console.log(imageName + " loaded");
+            },3000)
         });
+    }
+    loadAllImages(){
+        let promises = [];
+        for(let imageName in this.srcOfImageMap){
+            let src = this.srcOfImageMap[imageName]; 
+            const promise = this.loadImage(src, imageName)
+                .then((img) => {
+                    this.imageBox[imageName] = img
+            })
+            promises.push(promise);
+        }
+        return Promise.all(promises);
     }
 }
 
@@ -444,7 +451,5 @@ class PubSub {
         }
     }
 }
-const pubSubInstance = new PubSub();
-const game = new Game(pubSubInstance)
-// const initialization = new ResourceLoader();
 
+const game = new Game()
