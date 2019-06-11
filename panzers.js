@@ -1,12 +1,3 @@
-
-var t = fetch('level_1.json')
-t.then(res => {
-    return res.json()
-}).then(data => {
-    console.log(data);
-    
-})
-
 class Panzer {
     constructor(inputMap, pubsub, x, y){
         this.pubsub = pubsub;
@@ -72,10 +63,7 @@ class Shell {
 }
 
 class Block {
-    constructor(x, y, type){  ///(x,y)
-        // this.coords = {
-        //     x: 50,
-        //     y: 50}
+    constructor(x, y, type){ 
         this.coords = {
             x: x,
             y: y
@@ -89,10 +77,8 @@ class Block {
 class Game {
     constructor(){
         this.pubsub = new PubSub();;
-        this.pubsub.subscribe('shot', this, this.createShells);
-        this.resourceLoader = new ResourceLoader(); //вот здесь сделать инт на промис 
-        //this.resourceLoader.loadAllImages().then()
-        this.initialization();
+        this.resourceLoader = new ResourceLoader();
+        this.initialize();//функция - ГЛАГОЛ блядь!!!
         this.draw = new Drawing();
         this.intervalId = null;
         this.arrOfPanzers = [];
@@ -127,18 +113,41 @@ class Game {
                 79 : 'shot'
             }
         ]
-        // this.imageBox = {
-        //     blueTank : null,
-        //     redTank : null,
-        //     stone : null,
-        //     metal : null
-        // };
     }
-    initialization(){
+    initialize(){
+        this.pubsub.subscribe('shot', this, this.createShells);
+        
         this.resourceLoader.loadAllImages()
             .then(()=>{
-                this.gameControl()})
-            .catch(error => console.error(error));
+                this.gameControl()
+            })
+            .catch(error => console.error(error));       
+    }
+    createField(){
+        let t = fetch('level_1.json')
+        return t.then(res => {
+            return res.json()
+        }).then(data => {
+            let arr = data.block;
+            console.log(arr);
+        
+            for(let i = 0; i < arr.length; i++){
+                console.log(arr[i]);
+                let column = arr[i]
+                for(let j = 0; j < column.length; j++){
+                    let fieldCell = column[j]
+                    console.log('x ' + [j], 'y '+[i], 'typeOfCell ' + fieldCell);
+                    let x = [j+1];
+                    let y = [i+1];
+                    if(fieldCell != 0){
+                        const block = new Block(x * this.draw.cellSize, y * this.draw.cellSize, fieldCell);
+                        this.arrOfBlocks.push(block);
+                        console.log(this.arrOfBlocks.length);
+                        
+                    }
+                }
+            }
+        })       
     }
     createPanzers(){
         for(let i = 0; i < 2; i++){
@@ -158,16 +167,17 @@ class Game {
         }
     }
     checkMethod(){
-        for(let i = 0; i < this.draw.fieldWidth; i += this.draw.cellSize){
-            let x = i;
-            let y = 1;
-            //console.log(x);
-            const block = new Block(x + this.draw.cellSize/2, y + this.draw.cellSize/2, 1);
-            this.arrOfBlocks.push(block);
-        }
-        const block1 = new Block(10*this.draw.cellSize, 12*this.draw.cellSize, 0);
-        this.arrOfBlocks.push(block1);
-        console.log(this.arrOfBlocks.length);
+
+        // for(let i = 0; i < this.draw.fieldWidth; i += this.draw.cellSize){
+        //     let x = i;
+        //     let y = 1;
+        //     //console.log(x);
+        //     const block = new Block(x + this.draw.cellSize/2, y + this.draw.cellSize/2, 1);
+        //     this.arrOfBlocks.push(block);
+        // }
+        // const block1 = new Block(10*this.draw.cellSize, 12*this.draw.cellSize, 0);
+        // this.arrOfBlocks.push(block1);
+        // console.log(this.arrOfBlocks.length);
         
     }
     createShells(data){
@@ -189,8 +199,8 @@ class Game {
 
     checkShellCollision(){
         for(let i = 0; i < this.arrOfShells.length; i++){
-            let shellPositions = this.arrOfShells[i];
-            let shellCoord = shellPositions.coords;
+            let shell = this.arrOfShells[i];
+            let shellCoord = shell.coords;
             let cellSize = this.draw.cellSize;
             for(let k = 0; k < this.arrOfPanzers.length; k++){
                 let panzerPosition = this.arrOfPanzers[k];
@@ -238,13 +248,7 @@ class Game {
             }
         }
     }
-    checkPanzerTailCollision(){
-
-        // for(let i = 0; i < this.arrOfShells.length; i++){
-        //     let shell = this.arrOfShells[i];  ///забил хуй, решил не писать проверку на вылет, а огородить все поле блоками и писать проверку только на столкновение с танком/блоком
-        // }
-    }
-
+    
     panzerControl(){
         document.addEventListener('keydown', (e)=> {
             this.pressedKeys[e.keyCode] = true;
@@ -263,6 +267,7 @@ class Game {
             this.stopGame();
         } );
     }
+
     stopGame(){
         clearInterval(this.intervalId);
         this.arrOfPanzers = [];
@@ -271,7 +276,8 @@ class Game {
     }
     startGame(){
         this.stopGame();
-        this.checkMethod();
+        this.createField()
+        //this.checkMethod();
         //this.createBlocks();
         this.createPanzers();
         this.panzerControl();
@@ -291,7 +297,7 @@ class Game {
         }     
         this.checkPanzerCollision()
         this.checkShellCollision();
-        //this.checkBordersCollision();         не подключено        
+            
         for(let i = 0; i < this.arrOfShells.length; i++){
             let shell = this.arrOfShells[i];
             shell.update();
@@ -349,7 +355,7 @@ class Drawing {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         for(let i = 0; i < game.arrOfPanzers.length; i++){
             let panzerPosition = game.arrOfPanzers[i];
-            let img = game.imageBox.redTank;
+            let img = game.resourceLoader.imageBox.redTank;
             this.ctx.save();
             this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
             this.ctx.rotate(Math.atan2(panzerPosition.currentDirection.y, panzerPosition.currentDirection.x));
@@ -361,11 +367,11 @@ class Drawing {
         for(let i = 0; i < game.arrOfBlocks.length; i++){
             let block = game.arrOfBlocks[i];
             if(block.type == 1){
-                let img = game.imageBox.metal;
-            this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
+                let img = game.resourceLoader.imageBox.metal;
+                this.ctx.drawImage(img, block.coords.x - this.cellSize, block.coords.y - this.cellSize, this.cellSize, this.cellSize);
             }else{
-                let img = game.imageBox.stone;
-                this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
+                let img = game.resourceLoader.imageBox.stone;
+                this.ctx.drawImage(img, block.coords.x - this.cellSize, block.coords.y - this.cellSize, this.cellSize, this.cellSize);
             }
         }
 
@@ -396,20 +402,16 @@ class ResourceLoader{
             stone : 'stone.jpg',
             metal : 'metal.jpg'
         };
-        //this.loadAllImages();
     }
     loadImage(url, imageName){
         return new Promise((resolve, reject) => {
-            setTimeout(()=>{
-
-                let img = new Image();
-                img.addEventListener('load', () => resolve(img));
-                img.addEventListener('error', () => {
-                  reject(new Error(`Failed to load image's URL: ${url}`));
-                });
-                img.src = url;
-                console.log(imageName + " loaded");
-            },3000)
+            let img = new Image();
+            img.addEventListener('load', () => resolve(img));
+            img.addEventListener('error', () => {
+              reject(new Error(`Failed to load image's URL: ${url}`));
+            });
+            img.src = url;
+            console.log(imageName + " loaded");
         });
     }
     loadAllImages(){
@@ -453,3 +455,11 @@ class PubSub {
 }
 
 const game = new Game()
+
+// var t = fetch('level_1.json')
+// t.then(res => {
+//     return res.json()
+// }).then(data => {
+//     console.log(data);
+    
+// })
