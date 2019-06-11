@@ -71,8 +71,6 @@ class Block {
         this.type = type;
     }
 }
-// class SubField extends Field {
-// }
 
 class Game {
     constructor(){
@@ -85,6 +83,7 @@ class Game {
         this.arrOfShells = [];
         this.arrOfBlocks = [];
         this.timer = 100;
+        this.arrOfField = null;
         this.pressedKeys = {
             38 : false,
             40 : false,
@@ -114,40 +113,41 @@ class Game {
             }
         ]
     }
+
     initialize(){
         this.pubsub.subscribe('shot', this, this.createShells);
         
         this.resourceLoader.loadAllImages()
-            .then(()=>{
-                this.gameControl()
+        .then(()=>{
+            var t = fetch('level_1.json')
+            return t.then(res => {
+                return res.json()
+            }).then(data => {
+                console.log(data);
+                this.arrOfField = data.block
             })
-            .catch(error => console.error(error));       
+        })
+        .then(()=>{
+            this.gameControl()})
+        .catch(error => console.error(error));     
     }
+
     createField(){
-        let t = fetch('level_1.json')
-        return t.then(res => {
-            return res.json()
-        }).then(data => {
-            let arr = data.block;
-            console.log(arr);
-        
-            for(let i = 0; i < arr.length; i++){
-                console.log(arr[i]);
-                let column = arr[i]
-                for(let j = 0; j < column.length; j++){
-                    let fieldCell = column[j]
-                    console.log('x ' + [j], 'y '+[i], 'typeOfCell ' + fieldCell);
-                    let x = [j+1];
-                    let y = [i+1];
-                    if(fieldCell != 0){
-                        const block = new Block(x * this.draw.cellSize, y * this.draw.cellSize, fieldCell);
-                        this.arrOfBlocks.push(block);
-                        console.log(this.arrOfBlocks.length);
-                        
-                    }
+        for(let i = 0; i < this.arrOfField.length; i++){
+            console.log(this.arrOfField[i]);
+            let column = this.arrOfField[i];
+            for(let j = 0; j < column.length; j++){
+                let fieldCell = column[j]
+                console.log('x ' + [j], 'y '+[i], 'typeOfCell ' + fieldCell);
+                let x = [j+0.5];
+                let y = [i+0.5];
+                if(fieldCell != 0){
+                    const block = new Block(x * this.draw.cellSize, y * this.draw.cellSize, fieldCell);
+                    this.arrOfBlocks.push(block);
+                    console.log(this.arrOfBlocks.length);
                 }
             }
-        })       
+        }
     }
     createPanzers(){
         for(let i = 0; i < 2; i++){
@@ -156,29 +156,6 @@ class Game {
             const panz = new Panzer(this.superInputMap[i], this.pubsub, x, y);
             this.arrOfPanzers.push(panz);            
         }
-    }
-    createBlocks(){
-        for(let i = 0; i < 2; i++){
-            let x = Math.round(Math.random() * this.draw.fieldWidth);
-            let y = Math.round(Math.random() * this.draw.fieldHeight);
-            const block = new Block(x, y, 0);
-            this.arrOfBlocks.push(block);
-            console.log(this.arrOfBlocks[i].coords);   
-        }
-    }
-    checkMethod(){
-
-        // for(let i = 0; i < this.draw.fieldWidth; i += this.draw.cellSize){
-        //     let x = i;
-        //     let y = 1;
-        //     //console.log(x);
-        //     const block = new Block(x + this.draw.cellSize/2, y + this.draw.cellSize/2, 1);
-        //     this.arrOfBlocks.push(block);
-        // }
-        // const block1 = new Block(10*this.draw.cellSize, 12*this.draw.cellSize, 0);
-        // this.arrOfBlocks.push(block1);
-        // console.log(this.arrOfBlocks.length);
-        
     }
     createShells(data){
         if(data){
@@ -248,7 +225,9 @@ class Game {
             }
         }
     }
-    
+    checkMethod(){ 
+    }
+
     panzerControl(){
         document.addEventListener('keydown', (e)=> {
             this.pressedKeys[e.keyCode] = true;
@@ -277,8 +256,6 @@ class Game {
     startGame(){
         this.stopGame();
         this.createField()
-        //this.checkMethod();
-        //this.createBlocks();
         this.createPanzers();
         this.panzerControl();
         this.intervalId = setInterval(()=> {        
@@ -325,16 +302,19 @@ class Drawing {
         let arrOfHtmlElements = [];
         
         let div = document.createElement('div');
+
         let startGame = document.createElement('input');
         startGame.type = 'button';
         startGame.id = 'start';
         startGame.value = 'start game';
         this.startButton = startGame;
+
         let endGame = document.createElement('input');
         endGame.type = 'button';
         endGame.id = 'end';
         endGame.value = 'end game';
         this.stopButton = endGame;
+
         let canv = document.createElement('canvas');
         canv.id = 'canvas';
         canv.style = 'display: block;';
@@ -368,10 +348,10 @@ class Drawing {
             let block = game.arrOfBlocks[i];
             if(block.type == 1){
                 let img = game.resourceLoader.imageBox.metal;
-                this.ctx.drawImage(img, block.coords.x - this.cellSize, block.coords.y - this.cellSize, this.cellSize, this.cellSize);
+                this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
             }else{
                 let img = game.resourceLoader.imageBox.stone;
-                this.ctx.drawImage(img, block.coords.x - this.cellSize, block.coords.y - this.cellSize, this.cellSize, this.cellSize);
+                this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
             }
         }
 
@@ -455,11 +435,3 @@ class PubSub {
 }
 
 const game = new Game()
-
-// var t = fetch('level_1.json')
-// t.then(res => {
-//     return res.json()
-// }).then(data => {
-//     console.log(data);
-    
-// })
