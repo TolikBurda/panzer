@@ -1,7 +1,8 @@
 class Panzer {
-    constructor(inputMap, pubsub, x, y){
+    constructor(inputMap, pubsub, x, y, type){
         this.pubsub = pubsub;
-        this.position = {x: x, y: y};// координаты для спавна в переменную вместо 1,1
+        this.position = {x: x, y: y};
+        this.type = type;
         this.currentDirection = {x: 0, y: 0};
         this.superInputMap = inputMap;
     }
@@ -48,7 +49,7 @@ class Shell {
     constructor(coords){
         this.currentDirection = coords.direction;
         this.coords = coords.position;
-        this.shellSpeed = 10;
+        this.shellSpeed = 5;
         this.createShell(); 
     }
     createShell(){
@@ -58,7 +59,7 @@ class Shell {
     update(){
         this.coords.x += this.shellSpeed*this.currentDirection.x;
         this.coords.y += this.shellSpeed*this.currentDirection.y; 
-        console.log('shell position:', this.coords, );
+        console.log('shell position:', this.coords);
     }
 }
 
@@ -82,7 +83,7 @@ class Game {
         this.arrOfPanzers = [];
         this.arrOfShells = [];
         this.arrOfBlocks = [];
-        this.timer = 100;
+        this.timer = 50;
         this.arrOfField = null;
         this.pressedKeys = {
             38 : false,
@@ -102,14 +103,14 @@ class Game {
                 40 : 'down',
                 39 : 'right',
                 37 : 'left',
-                80 : 'shot'
+                191 : 'shot'
             },
             {
                 87 : 'up',
                 83 : 'down',
                 68 : 'right',
                 65 : 'left',
-                79 : 'shot'
+                81 : 'shot'
             }
         ]
     }
@@ -139,23 +140,29 @@ class Game {
             for(let j = 0; j < column.length; j++){
                 let fieldCell = column[j]
                 console.log('x ' + [j], 'y '+[i], 'typeOfCell ' + fieldCell);
-                let x = [j+0.5];
-                let y = [i+0.5];
-                if(fieldCell != 0){
-                    const block = new Block(x * this.draw.cellSize, y * this.draw.cellSize, fieldCell);
-                    this.arrOfBlocks.push(block);
-                    console.log(this.arrOfBlocks.length);
+                let x = [j + 0.5];
+                let y = [i + 0.5];
+                switch(fieldCell){
+                    case 0 : break;
+                    case 1 : this.createBlocks(x * this.draw.cellSize, y * this.draw.cellSize, fieldCell)
+                    break;
+                    case 2 : this.createBlocks(x * this.draw.cellSize, y * this.draw.cellSize, fieldCell)
+                    break;
+                    case 3 : this.createPanzers(this.superInputMap[0], x * this.draw.cellSize, y * this.draw.cellSize, fieldCell)
+                    break;
+                    case 4 : this.createPanzers(this.superInputMap[1], x * this.draw.cellSize, y * this.draw.cellSize, fieldCell)
+                    break;
                 }
             }
         }
     }
-    createPanzers(){
-        for(let i = 0; i < 2; i++){
-            let x = Math.round(Math.random() * this.draw.fieldWidth);
-            let y = Math.round(Math.random() * this.draw.fieldHeight);
-            const panz = new Panzer(this.superInputMap[i], this.pubsub, x, y);
-            this.arrOfPanzers.push(panz);            
-        }
+    createBlocks(x, y, type){
+        let block = new Block(x, y, type);
+        this.arrOfBlocks.push(block);
+    }
+    createPanzers(inputMap, x, y, type){
+        const panz = new Panzer(inputMap, this.pubsub, x, y, type);
+        this.arrOfPanzers.push(panz); 
     }
     createShells(data){
         if(data){
@@ -256,7 +263,6 @@ class Game {
     startGame(){
         this.stopGame();
         this.createField()
-        this.createPanzers();
         this.panzerControl();
         this.intervalId = setInterval(()=> {        
             this.mainLoop()
@@ -274,7 +280,6 @@ class Game {
         }     
         this.checkPanzerCollision()
         this.checkShellCollision();
-            
         for(let i = 0; i < this.arrOfShells.length; i++){
             let shell = this.arrOfShells[i];
             shell.update();
@@ -333,33 +338,30 @@ class Drawing {
     drawField(game){
         this.ctx.fillStyle = 'white';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
         for(let i = 0; i < game.arrOfPanzers.length; i++){
-            let panzerPosition = game.arrOfPanzers[i];
-            let img = game.resourceLoader.imageBox.redTank;
+            let panzer = game.arrOfPanzers[i];
+            let img = game.resourceLoader.imageBox;
+            panzer.type == 3? img = img.blueTank : img = img.redTank;
             this.ctx.save();
-            this.ctx.translate(panzerPosition.position.x, panzerPosition.position.y);
-            this.ctx.rotate(Math.atan2(panzerPosition.currentDirection.y, panzerPosition.currentDirection.x));
-            this.ctx.translate( -panzerPosition.position.x, -panzerPosition.position.y);
-            this.ctx.drawImage(img, panzerPosition.position.x - this.cellSize/2, panzerPosition.position.y - this.cellSize/2, this.cellSize, this.cellSize);
+            this.ctx.translate(panzer.position.x, panzer.position.y);
+            this.ctx.rotate(Math.atan2(panzer.currentDirection.y, panzer.currentDirection.x));
+            this.ctx.translate( -panzer.position.x, -panzer.position.y);
+            this.ctx.drawImage(img, panzer.position.x - this.cellSize/2, panzer.position.y - this.cellSize/2, this.cellSize, this.cellSize);
             this.ctx.restore();
         }
 
         for(let i = 0; i < game.arrOfBlocks.length; i++){
             let block = game.arrOfBlocks[i];
-            if(block.type == 1){
-                let img = game.resourceLoader.imageBox.metal;
-                this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
-            }else{
-                let img = game.resourceLoader.imageBox.stone;
-                this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
-            }
+            let img = game.resourceLoader.imageBox;
+            block.type == 1 ? img = img.metal : img = img.stone;
+            this.ctx.drawImage(img, block.coords.x - this.cellSize/2, block.coords.y - this.cellSize/2, this.cellSize, this.cellSize);
         }
 
         for(let i = 0; i < game.arrOfShells.length; i++){
-            let shellPositions = game.arrOfShells[i];
+            let shell = game.arrOfShells[i];
             this.ctx.fillStyle = 'black';
-            
-            this.ctx.fillRect(shellPositions.coords.x, shellPositions.coords.y, 5, 5)
+            this.ctx.fillRect(shell.coords.x, shell.coords.y, 5, 5)
         }
 
         this.ctx.strokeStyle = 'blue';
